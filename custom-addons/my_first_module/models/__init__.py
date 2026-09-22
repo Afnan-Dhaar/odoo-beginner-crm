@@ -1,1 +1,1 @@
-from . import activity, company, customer, note, tag
+from . import activity, company, customer, invoice, note, tag

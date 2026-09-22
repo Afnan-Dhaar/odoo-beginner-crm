@@ -38,6 +38,12 @@ class Customer(models.Model):
         string="Activities",
     )
 
+    invoice_ids = fields.One2many(
+        "my.first.customer.invoice",
+        "customer_id",
+        string="Invoices",
+    )
+
     tag_ids = fields.Many2many(
         "my.first.customer.tag",
         "customer_tag_rel",

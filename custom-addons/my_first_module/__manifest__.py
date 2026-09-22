@@ -10,11 +10,13 @@
     "data": [
         "security/ir.model.access.csv",
         "data/customer_sequence.xml",
+        "data/invoice_sequence.xml",
         "views/customer_views.xml",
         "views/company_views.xml",
         "views/tag_views.xml",
         "views/customer_note_views.xml",
         "views/customer_activity_views.xml",
+        "views/customer_invoice_views.xml",
     ],
     "installable": True,
     "application": True,
