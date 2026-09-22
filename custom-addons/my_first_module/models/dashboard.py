@@ -1,0 +1,86 @@
+from odoo import api, fields, models
+
+
+class CrmDashboard(models.Model):
+    _name = "my.first.crm.dashboard"
+    _description = "CRM Dashboard"
+
+    name = fields.Char(default="CRM Dashboard", readonly=True)
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="Currency",
+        compute="_compute_kpis",
+    )
+    customer_count = fields.Integer(compute="_compute_kpis")
+    active_customer_count = fields.Integer(compute="_compute_kpis")
+    open_activity_count = fields.Integer(compute="_compute_kpis")
+    overdue_activity_count = fields.Integer(compute="_compute_kpis")
+    unpaid_invoice_count = fields.Integer(compute="_compute_kpis")
+    outstanding_amount = fields.Monetary(
+        string="Outstanding Amount",
+        currency_field="currency_id",
+        compute="_compute_kpis",
+    )
+
+    @api.depends()
+    def _compute_kpis(self):
+        Customer = self.env["my.first.customer"]
+        Activity = self.env["my.first.customer.activity"]
+        Invoice = self.env["my.first.customer.invoice"]
+
+        customer_count = Customer.search_count([])
+        active_customer_count = Customer.search_count([("status", "=", "active")])
+        open_activity_count = Activity.search_count([("status", "=", "planned")])
+        overdue_activity_count = Activity.search_count(
+            [
+                ("status", "=", "planned"),
+                ("due_date", "<", fields.Date.today()),
+            ]
+        )
+        unpaid_invoices = Invoice.search(
+            [("payment_status", "in", ["not_paid", "partially_paid"])]
+        )
+
+        for dashboard in self:
+            dashboard.currency_id = self.env.company.currency_id
+            dashboard.customer_count = customer_count
+            dashboard.active_customer_count = active_customer_count
+            dashboard.open_activity_count = open_activity_count
+            dashboard.overdue_activity_count = overdue_activity_count
+            dashboard.unpaid_invoice_count = len(unpaid_invoices)
+            dashboard.outstanding_amount = sum(unpaid_invoices.mapped("amount_due"))
+
+    def _open_action(self, model, name):
+        return {
+            "type": "ir.actions.act_window",
+            "name": name,
+            "res_model": model,
+            "view_mode": "list,form",
+            "target": "current",
+        }
+
+    def action_open_customers(self):
+        return self._open_action("my.first.customer", "Customers")
+
+    def action_open_active_customers(self):
+        action = self._open_action("my.first.customer", "Active Customers")
+        action["domain"] = [("status", "=", "active")]
+        return action
+
+    def action_open_activities(self):
+        return self._open_action("my.first.customer.activity", "Activities")
+
+    def action_open_overdue_activities(self):
+        action = self._open_action("my.first.customer.activity", "Overdue Activities")
+        action["domain"] = [
+            ("status", "=", "planned"),
+            ("due_date", "<", fields.Date.today()),
+        ]
+        return action
+
+    def action_open_unpaid_invoices(self):
+        action = self._open_action("my.first.customer.invoice", "Unpaid Invoices")
+        action["domain"] = [
+            ("payment_status", "in", ["not_paid", "partially_paid"])
+        ]
+        return action

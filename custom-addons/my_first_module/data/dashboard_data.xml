@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <record id="crm_dashboard_record" model="my.first.crm.dashboard">
+        <field name="name">CRM Dashboard</field>
+    </record>
+</odoo>
