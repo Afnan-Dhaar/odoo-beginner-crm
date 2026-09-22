@@ -14,6 +14,7 @@
         "views/company_views.xml",
         "views/tag_views.xml",
         "views/customer_note_views.xml",
+        "views/customer_activity_views.xml",
     ],
     "installable": True,
     "application": True,

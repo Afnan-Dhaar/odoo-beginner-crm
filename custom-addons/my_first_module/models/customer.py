@@ -32,6 +32,12 @@ class Customer(models.Model):
         string="Notes",
     )
 
+    activity_ids = fields.One2many(
+        "my.first.customer.activity",
+        "customer_id",
+        string="Activities",
+    )
+
     tag_ids = fields.Many2many(
         "my.first.customer.tag",
         "customer_tag_rel",

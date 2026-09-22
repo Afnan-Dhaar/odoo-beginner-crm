@@ -195,6 +195,31 @@
                             </list>
                         </field>
                     </page>
+                    <page string="Activities">
+                        <field name="activity_ids">
+                            <list>
+                                <button
+                                    name="action_mark_done"
+                                    string="Mark Done"
+                                    type="object"
+                                    invisible="status != 'planned'"
+                                />
+                                <button
+                                    name="action_cancel"
+                                    string="Cancel"
+                                    type="object"
+                                    invisible="status != 'planned'"
+                                    class="btn-secondary"
+                                />
+                                <field name="title"/>
+                                <field name="activity_type"/>
+                                <field name="status"/>
+                                <field name="priority"/>
+                                <field name="due_date"/>
+                                <field name="assigned_to"/>
+                            </list>
+                        </field>
+                    </page>
                 </notebook>
 
                 </sheet>
