@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Customer Tag List View -->
+    <record id="view_my_first_customer_tag_list" model="ir.ui.view">
+        <field name="name">my.first.customer.tag.list</field>
+        <field name="model">my.first.customer.tag</field>
+        <field name="arch" type="xml">
+            <list string="Customer Tags">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- Customer Tag Form View -->
+    <record id="view_my_first_customer_tag_form" model="ir.ui.view">
+        <field name="name">my.first.customer.tag.form</field>
+        <field name="model">my.first.customer.tag</field>
+        <field name="arch" type="xml">
+            <form string="Customer Tag">
+                <sheet>
+                    <group string="Tag Information">
+                        <field name="name"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Customers">
+                            <field name="customer_ids" widget="many2many_tags"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+
+    <!-- Customer Tag Action -->
+    <record id="action_my_first_customer_tag" model="ir.actions.act_window">
+        <field name="name">Customer Tags</field>
+        <field name="res_model">my.first.customer.tag</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+    <!-- Customer Tag Menu -->
+    <menuitem
+        id="menu_my_first_customer_tag"
+        name="Customer Tags"
+        action="action_my_first_customer_tag"
+    />
+
+</odoo>

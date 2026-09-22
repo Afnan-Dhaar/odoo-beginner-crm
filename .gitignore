@@ -1,0 +1,19 @@
+# Odoo framework source
+odoo/
+
+# Python virtual environment
+venv/
+
+# Local configuration and credentials
+odoo.conf
+
+# Python generated files
+**/__pycache__/
+*.py[cod]
+
+# IDE settings
+.vscode/
+.idea/
+
+# Python packaging files
+*.egg-info/

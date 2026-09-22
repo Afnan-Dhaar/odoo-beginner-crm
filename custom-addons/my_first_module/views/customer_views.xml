@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- ============================= -->
+    <!-- Customer List View             -->
+    <!-- ============================= -->
+
+    <record id="view_my_first_customer_list" model="ir.ui.view">
+        <field name="name">my.first.customer.list</field>
+        <field name="model">my.first.customer</field>
+
+        <field name="arch" type="xml">
+           <list string="Customers">
+           <header>
+                <button
+                    name="action_test_recordset"
+                    string="Test Recordset"
+                    type="object"
+                />
+                <!-- <button
+                    name="action_search_active_customers"
+                    string="Search Active Customers"
+                    type="object"
+                    class="btn-secondary"
+                />
+                <button
+                    name="action_search_active_company_customers"
+                    string="Active + Aseef Customers"
+                    type="object"
+                    class="btn-secondary"
+                />
+                <button
+                    name="action_search_new_or_inactive_customers"
+                    string="New OR Inactive"
+                    type="object"
+                    class="btn-secondary"
+                />
+                <button
+                    name="action_search_active_company_or_new"
+                    string="Active + Aseef OR New"
+                    type="object"
+                    class="btn-secondary"
+                /> -->
+            </header>
+            <field name="reference"/>
+            <field name="name"/>
+            <field name="company_name"/>
+            <field name="display_name"/>
+            <field name="email"/>
+            <field name="phone"/>
+            <field name="status"/>
+            </list>
+        </field>
+    </record>
+    <!-- ============================= -->
+    <!-- Customer Search View          -->
+    <!-- ============================= -->
+
+    <record id="view_my_first_customer_search" model="ir.ui.view">
+        <field name="name">my.first.customer.search</field>
+        <field name="model">my.first.customer</field>
+
+        <field name="arch" type="xml">
+            <search string="Search Customers">
+
+            <field name="name"/>
+            <field name="reference"/>
+            <field name="email"/>
+            <field name="phone"/>
+            <field name="company_name"/>
+
+                <separator/>
+
+                <filter
+                    name="filter_new"
+                    string="New"
+                    domain="[('status', '=', 'new')]"
+                />
+
+                <filter
+                    name="filter_active"
+                    string="Active"
+                    domain="[('status', '=', 'active')]"
+                />
+
+                <filter
+                    name="filter_inactive"
+                    string="Inactive"
+                    domain="[('status', '=', 'inactive')]"
+                />
+
+                <separator/>
+
+                <group>
+                    <filter
+                        name="group_by_status"
+                        string="Status"
+                        context="{'group_by': 'status'}"
+                    />
+
+                    <filter
+                        name="group_by_company"
+                        string="Company Name"
+                        context="{'group_by': 'company_name'}"
+                    />
+                </group>
+
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================= -->
+    <!-- Customer Form View             -->
+    <!-- ============================= -->
+
+    <record id="view_my_first_customer_form" model="ir.ui.view">
+        <field name="name">my.first.customer.form</field>
+        <field name="model">my.first.customer</field>
+
+        <field name="arch" type="xml">
+            <form string="Customer">
+
+            <header>
+                    <button
+                name="action_activate"
+                string="Activate"
+                type="object"
+                class="btn-primary"
+                invisible="status == 'active'"
+                    />
+                    <button
+                name="action_deactivate"
+                string="Deactivate"
+                type="object"
+                class="btn-secondary"
+                invisible="status != 'active'"
+                    />
+                        <button
+        name="action_test_recordset"
+        string="Test Recordset"
+        type="object"
+        class="btn-secondary"
+        invisible="status != 'active'"
+    />
+    <!-- <button
+    name="action_test_multiple_create"
+    string="Test Multiple Create"
+    type="object"
+    class="btn-secondary"
+/> -->
+            </header>
+                <sheet>
+
+                    <!-- Customer Information -->
+                <group string="Customer Information">
+                    <field name="reference"/>
+                    <field name="name"/>
+                    <field name="email"/>
+                    <field name="phone"/>
+                    <field name="company_id"/>
+                    <field name="company_name"/>
+                    <field name="tag_ids" widget="many2many_tags"/>
+                    <field name="status"/>
+                    <field name="last_updated" readonly="1"/>
+                    <field name="created_at" readonly="1"/>
+                </group>
+                <notebook>
+                    <page string="Notes">
+                        <field name="note_ids">
+                            <list editable="bottom">
+                                <button
+                                    name="action_mark_done"
+                                    string="Mark Done"
+                                    type="object"
+                                    invisible="status == 'done'"
+                                />
+                                <button
+                                    name="action_mark_contacted"
+                                    string="Mark Contacted"
+                                    type="object"
+                                    invisible="contacted"
+                                    class="btn-secondary"
+                                />
+                                <field name="title"/>
+                                <field name="note" widget="text"/>
+                                <field name="note_type"/>
+                                <field name="status"/>
+                                <field name="priority"/>
+                                <field name="follow_up_date"/>
+                                <field name="contacted"/>
+                                <field name="created_at" readonly="1"/>
+                                <field name="updated_at" readonly="1"/>
+                                <field name="created_by" readonly="1"/>
+                            </list>
+                        </field>
+                    </page>
+                </notebook>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+
+    <!-- ============================= -->
+    <!-- Customer Window Action         -->
+    <!-- ============================= -->
+
+    <record id="action_my_first_customer" model="ir.actions.act_window">
+        <field name="name">Customers</field>
+        <field name="res_model">my.first.customer</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+    <!-- ============================= -->
+    <!-- Customer Menu                 -->
+    <!-- ============================= -->
+
+    <menuitem
+        id="menu_my_first_customer"
+        name="Customers"
+        action="action_my_first_customer"
+    />
+
+</odoo>

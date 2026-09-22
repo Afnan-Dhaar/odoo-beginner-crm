@@ -1,0 +1,20 @@
+{
+    "name": "My First Module",
+    "version": "19.0.1.0.0",
+    "category": "Tools",
+    "summary": "My first custom Odoo module",
+    "description": "A beginner Odoo module for learning custom models and views.",
+    "author": "Afnan",
+    "license": "LGPL-3",
+    "depends": ["base"],
+    "data": [
+        "security/ir.model.access.csv",
+        "data/customer_sequence.xml",
+        "views/customer_views.xml",
+        "views/company_views.xml",
+        "views/tag_views.xml",
+        "views/customer_note_views.xml",
+    ],
+    "installable": True,
+    "application": True,
+}

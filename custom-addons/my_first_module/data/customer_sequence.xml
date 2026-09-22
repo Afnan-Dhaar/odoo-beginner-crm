@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <record id="seq_my_first_customer" model="ir.sequence">
+        <field name="name">Customer Reference</field>
+        <field name="code">my.first.customer</field>
+        <field name="prefix">CUS</field>
+        <field name="padding">5</field>
+    </record>
+
+</odoo>

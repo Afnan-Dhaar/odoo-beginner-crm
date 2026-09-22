@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Company List View -->
+    <record id="view_my_first_company_list" model="ir.ui.view">
+        <field name="name">my.first.company.list</field>
+        <field name="model">my.first.company</field>
+        <field name="arch" type="xml">
+            <list string="Companies">
+                <field name="name"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- Company Form View -->
+    <record id="view_my_first_company_form" model="ir.ui.view">
+        <field name="name">my.first.company.form</field>
+        <field name="model">my.first.company</field>
+        <field name="arch" type="xml">
+        <form string="Company">
+                <sheet>
+                    <group string="Company Information">
+                        <field name="name"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Customers">
+                            <field name="customer_ids">
+                                <list>
+                                    <field name="reference"/>
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="phone"/>
+                                    <field name="status"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+        </form>
+        </field>
+    </record>
+
+
+    <!-- Company Action -->
+    <record id="action_my_first_company" model="ir.actions.act_window">
+        <field name="name">Companies</field>
+        <field name="res_model">my.first.company</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+
+    <!-- Company Menu -->
+    <menuitem
+        id="menu_my_first_company"
+        name="Companies"
+        action="action_my_first_company"
+    />
+
+</odoo>

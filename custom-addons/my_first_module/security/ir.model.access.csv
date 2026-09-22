@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_my_first_customer,access_my_first_customer,my_first_module.model_my_first_customer,base.group_user,1,1,1,1
+access_my_first_company,access_my_first_company,my_first_module.model_my_first_company,base.group_user,1,1,1,1
+access_my_first_customer_tag,access_my_first_customer_tag,my_first_module.model_my_first_customer_tag,base.group_user,1,1,1,1
+access_my_first_customer_note,access_my_first_customer_note,my_first_module.model_my_first_customer_note,base.group_user,1,1,1,1
