@@ -21,6 +21,14 @@ class CrmDashboard(models.Model):
         currency_field="currency_id",
         compute="_compute_kpis",
     )
+    recent_activity_ids = fields.Many2many(
+        "my.first.customer.activity",
+        compute="_compute_kpis",
+    )
+    upcoming_activity_ids = fields.Many2many(
+        "my.first.customer.activity",
+        compute="_compute_kpis",
+    )
 
     @api.depends()
     def _compute_kpis(self):
@@ -40,6 +48,15 @@ class CrmDashboard(models.Model):
         unpaid_invoices = Invoice.search(
             [("payment_status", "in", ["not_paid", "partially_paid"])]
         )
+        recent_activities = Activity.search([], order="create_date desc", limit=5)
+        upcoming_activities = Activity.search(
+            [
+                ("status", "=", "planned"),
+                ("due_date", ">=", fields.Date.today()),
+            ],
+            order="due_date, id",
+            limit=5,
+        )
 
         for dashboard in self:
             dashboard.currency_id = self.env.company.currency_id
@@ -49,6 +66,8 @@ class CrmDashboard(models.Model):
             dashboard.overdue_activity_count = overdue_activity_count
             dashboard.unpaid_invoice_count = len(unpaid_invoices)
             dashboard.outstanding_amount = sum(unpaid_invoices.mapped("amount_due"))
+            dashboard.recent_activity_ids = recent_activities
+            dashboard.upcoming_activity_ids = upcoming_activities
 
     def _open_action(self, model, name):
         return {
@@ -84,3 +103,30 @@ class CrmDashboard(models.Model):
             ("payment_status", "in", ["not_paid", "partially_paid"])
         ]
         return action
+
+    def action_create_customer(self):
+        return {
+            "type": "ir.actions.act_window",
+            "name": "New Customer",
+            "res_model": "my.first.customer",
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_create_activity(self):
+        return {
+            "type": "ir.actions.act_window",
+            "name": "New Activity",
+            "res_model": "my.first.customer.activity",
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_create_invoice(self):
+        return {
+            "type": "ir.actions.act_window",
+            "name": "New Invoice",
+            "res_model": "my.first.customer.invoice",
+            "view_mode": "form",
+            "target": "current",
+        }

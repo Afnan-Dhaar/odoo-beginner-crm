@@ -2,71 +2,76 @@
 
 <odoo>
 
-    <record id="view_my_first_crm_dashboard_kanban" model="ir.ui.view">
-        <field name="name">my.first.crm.dashboard.kanban</field>
+    <record id="view_my_first_crm_dashboard_form" model="ir.ui.view">
+        <field name="name">my.first.crm.dashboard.form</field>
         <field name="model">my.first.crm.dashboard</field>
         <field name="arch" type="xml">
-            <kanban create="0" edit="0" delete="0">
-                <field name="customer_count"/>
-                <field name="active_customer_count"/>
-                <field name="open_activity_count"/>
-                <field name="overdue_activity_count"/>
-                <field name="unpaid_invoice_count"/>
-                <field name="outstanding_amount"/>
-                <field name="currency_id"/>
-                <templates>
-                    <t t-name="card">
-                        <div class="oe_kanban_global_click">
-                            <div class="o_kanban_record_title mb-3">
-                                <strong>CRM Dashboard</strong>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-4">
-                                    <button type="object" name="action_open_customers" class="btn btn-link p-0 text-start">
-                                        <div class="text-muted">Customers</div>
-                                        <strong class="fs-3"><field name="customer_count"/></strong>
-                                    </button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="object" name="action_open_active_customers" class="btn btn-link p-0 text-start">
-                                        <div class="text-muted">Active Customers</div>
-                                        <strong class="fs-3"><field name="active_customer_count"/></strong>
-                                    </button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="object" name="action_open_activities" class="btn btn-link p-0 text-start">
-                                        <div class="text-muted">Open Activities</div>
-                                        <strong class="fs-3"><field name="open_activity_count"/></strong>
-                                    </button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="object" name="action_open_overdue_activities" class="btn btn-link p-0 text-start">
-                                        <div class="text-muted">Overdue Activities</div>
-                                        <strong class="fs-3 text-danger"><field name="overdue_activity_count"/></strong>
-                                    </button>
-                                </div>
-                                <div class="col-4">
-                                    <button type="object" name="action_open_unpaid_invoices" class="btn btn-link p-0 text-start">
-                                        <div class="text-muted">Unpaid Invoices</div>
-                                        <strong class="fs-3"><field name="unpaid_invoice_count"/></strong>
-                                    </button>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-muted">Outstanding Amount</div>
-                                    <strong class="fs-3"><field name="outstanding_amount"/></strong>
-                                </div>
-                            </div>
-                        </div>
-                    </t>
-                </templates>
-            </kanban>
+            <form string="CRM Dashboard" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_create_customer" string="New Customer" type="object" class="btn-primary"/>
+                    <button name="action_create_activity" string="New Activity" type="object" class="btn-secondary"/>
+                    <button name="action_create_invoice" string="New Invoice" type="object" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>CRM Dashboard</h1>
+                        <p class="text-muted">A live overview of customers, follow-ups, and payments.</p>
+                    </div>
+                    <field name="currency_id" invisible="1"/>
+                    <div class="o_row o_dashboard_kpi_row">
+                        <button name="action_open_customers" type="object" class="oe_stat_button" icon="fa-users">
+                            <field name="customer_count" widget="statinfo" string="Customers"/>
+                        </button>
+                        <button name="action_open_active_customers" type="object" class="oe_stat_button" icon="fa-user-check">
+                            <field name="active_customer_count" widget="statinfo" string="Active Customers"/>
+                        </button>
+                        <button name="action_open_activities" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="open_activity_count" widget="statinfo" string="Open Activities"/>
+                        </button>
+                        <button name="action_open_overdue_activities" type="object" class="oe_stat_button text-danger" icon="fa-clock-o">
+                            <field name="overdue_activity_count" widget="statinfo" string="Overdue Activities"/>
+                        </button>
+                        <button name="action_open_unpaid_invoices" type="object" class="oe_stat_button text-warning" icon="fa-file-text-o">
+                            <field name="unpaid_invoice_count" widget="statinfo" string="Unpaid Invoices"/>
+                        </button>
+                        <button name="action_open_unpaid_invoices" type="object" class="oe_stat_button text-danger" icon="fa-money">
+                            <field name="outstanding_amount" widget="statinfo" string="Outstanding Amount"/>
+                        </button>
+                    </div>
+                    <separator string="Follow-up Overview"/>
+                    <div class="o_row">
+                        <group string="Recent Activities" class="o_col-6">
+                            <field name="recent_activity_ids" nolabel="1">
+                                <list create="0" edit="0" delete="0">
+                                    <field name="title"/>
+                                    <field name="customer_id"/>
+                                    <field name="activity_type"/>
+                                    <field name="status"/>
+                                    <field name="due_date"/>
+                                </list>
+                            </field>
+                        </group>
+                        <group string="Upcoming Follow-ups" class="o_col-6">
+                            <field name="upcoming_activity_ids" nolabel="1">
+                                <list create="0" edit="0" delete="0">
+                                    <field name="title"/>
+                                    <field name="customer_id"/>
+                                    <field name="activity_type"/>
+                                    <field name="priority"/>
+                                    <field name="due_date" decoration-danger="priority in ['urgent', 'high']"/>
+                                </list>
+                            </field>
+                        </group>
+                    </div>
+                </sheet>
+            </form>
         </field>
     </record>
 
     <record id="action_my_first_crm_dashboard" model="ir.actions.act_window">
         <field name="name">CRM Dashboard</field>
         <field name="res_model">my.first.crm.dashboard</field>
-        <field name="view_mode">kanban</field>
+        <field name="view_mode">form</field>
         <field name="res_id" ref="crm_dashboard_record"/>
     </record>
 
