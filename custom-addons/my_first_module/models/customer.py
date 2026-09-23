@@ -14,6 +14,25 @@ class Customer(models.Model):
     name = fields.Char(string="Customer Name", required=True)
     email = fields.Char(string="Email")
     phone = fields.Char(string="Phone")
+    website = fields.Char(string="Website")
+    street = fields.Char(string="Street")
+    street2 = fields.Char(string="Street 2")
+    city = fields.Char(string="City")
+    state = fields.Char(string="State")
+    zip = fields.Char(string="ZIP Code")
+    country = fields.Char(string="Country")
+
+    category = fields.Selection(
+        [
+            ("lead", "Lead"),
+            ("prospect", "Prospect"),
+            ("customer", "Customer"),
+            ("vip", "VIP"),
+        ],
+        string="Category",
+        default="lead",
+        required=True,
+    )
 
     company_id = fields.Many2one(
         "my.first.company",
@@ -79,10 +98,62 @@ class Customer(models.Model):
         readonly=True,
     )
 
+    last_contact_date = fields.Date(
+        string="Last Contact",
+        compute="_compute_profile_summary",
+    )
+    currency_id = fields.Many2one(
+        "res.currency",
+        string="Currency",
+        compute="_compute_profile_summary",
+    )
+    total_invoiced = fields.Monetary(
+        string="Total Invoiced",
+        currency_field="currency_id",
+        compute="_compute_profile_summary",
+    )
+    total_paid = fields.Monetary(
+        string="Total Paid",
+        currency_field="currency_id",
+        compute="_compute_profile_summary",
+    )
+    total_due = fields.Monetary(
+        string="Total Due",
+        currency_field="currency_id",
+        compute="_compute_profile_summary",
+    )
+
     @api.depends("reference", "name")
     def _compute_display_name(self):
         for customer in self:
             customer.display_name = f"{customer.reference} - {customer.name}"
+
+    @api.depends(
+        "note_ids.created_at",
+        "note_ids.updated_at",
+        "activity_ids.completed_at",
+        "invoice_ids.amount_total",
+        "invoice_ids.amount_paid",
+        "invoice_ids.amount_due",
+    )
+    def _compute_profile_summary(self):
+        for customer in self:
+            contact_dates = [
+                date_value
+                for date_value in (
+                    customer.note_ids.mapped("updated_at")
+                    + customer.note_ids.mapped("created_at")
+                    + customer.activity_ids.mapped("completed_at")
+                )
+                if date_value
+            ]
+            customer.last_contact_date = (
+                fields.Date.to_date(max(contact_dates)) if contact_dates else False
+            )
+            customer.currency_id = self.env.company.currency_id
+            customer.total_invoiced = sum(customer.invoice_ids.mapped("amount_total"))
+            customer.total_paid = sum(customer.invoice_ids.mapped("amount_paid"))
+            customer.total_due = sum(customer.invoice_ids.mapped("amount_due"))
 
     @api.constrains("email")
     def _check_email(self):

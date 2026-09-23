@@ -13,11 +13,6 @@
         <field name="arch" type="xml">
            <list string="Customers">
            <header>
-                <button
-                    name="action_test_recordset"
-                    string="Test Recordset"
-                    type="object"
-                />
                 <!-- <button
                     name="action_search_active_customers"
                     string="Search Active Customers"
@@ -49,6 +44,7 @@
             <field name="display_name"/>
             <field name="email"/>
             <field name="phone"/>
+            <field name="category"/>
             <field name="status"/>
             </list>
         </field>
@@ -69,6 +65,7 @@
             <field name="email"/>
             <field name="phone"/>
             <field name="company_name"/>
+            <field name="category"/>
 
                 <separator/>
 
@@ -136,13 +133,6 @@
                 class="btn-secondary"
                 invisible="status != 'active'"
                     />
-                        <button
-        name="action_test_recordset"
-        string="Test Recordset"
-        type="object"
-        class="btn-secondary"
-        invisible="status != 'active'"
-    />
     <!-- <button
     name="action_test_multiple_create"
     string="Test Multiple Create"
@@ -156,14 +146,31 @@
                 <group string="Customer Information">
                     <field name="reference"/>
                     <field name="name"/>
+                    <field name="category"/>
                     <field name="email"/>
                     <field name="phone"/>
+                    <field name="website"/>
                     <field name="company_id"/>
                     <field name="company_name"/>
                     <field name="tag_ids" widget="many2many_tags"/>
                     <field name="status"/>
+                    <field name="last_contact_date" readonly="1"/>
                     <field name="last_updated" readonly="1"/>
                     <field name="created_at" readonly="1"/>
+                </group>
+                <group string="Address">
+                    <field name="street"/>
+                    <field name="street2"/>
+                    <field name="city"/>
+                    <field name="state"/>
+                    <field name="zip"/>
+                    <field name="country"/>
+                </group>
+                <group string="Financial Summary">
+                    <field name="currency_id" invisible="1"/>
+                    <field name="total_invoiced" readonly="1"/>
+                    <field name="total_paid" readonly="1"/>
+                    <field name="total_due" readonly="1"/>
                 </group>
                 <notebook>
                     <page string="Notes">
