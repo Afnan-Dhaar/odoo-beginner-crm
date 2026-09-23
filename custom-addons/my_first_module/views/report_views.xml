@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <record id="view_my_first_customer_report_graph" model="ir.ui.view">
+        <field name="name">my.first.customer.report.graph</field>
+        <field name="model">my.first.customer</field>
+        <field name="arch" type="xml">
+            <graph string="Customer Analysis" type="bar">
+                <field name="category" type="row"/>
+                <field name="status" type="col"/>
+                <field name="id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_my_first_customer_report_pivot" model="ir.ui.view">
+        <field name="name">my.first.customer.report.pivot</field>
+        <field name="model">my.first.customer</field>
+        <field name="arch" type="xml">
+            <pivot string="Customer Analysis">
+                <field name="category" type="row"/>
+                <field name="status" type="col"/>
+                <field name="id" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_my_first_customer_report" model="ir.actions.act_window">
+        <field name="name">Customer Analysis</field>
+        <field name="res_model">my.first.customer</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="view_id" ref="view_my_first_customer_report_graph"/>
+    </record>
+
+    <record id="view_my_first_activity_report_graph" model="ir.ui.view">
+        <field name="name">my.first.activity.report.graph</field>
+        <field name="model">my.first.customer.activity</field>
+        <field name="arch" type="xml">
+            <graph string="Activity Analysis" type="bar">
+                <field name="activity_type" type="row"/>
+                <field name="status" type="col"/>
+                <field name="id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_my_first_activity_report_pivot" model="ir.ui.view">
+        <field name="name">my.first.activity.report.pivot</field>
+        <field name="model">my.first.customer.activity</field>
+        <field name="arch" type="xml">
+            <pivot string="Activity Analysis">
+                <field name="activity_type" type="row"/>
+                <field name="assigned_to" type="col"/>
+                <field name="id" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_my_first_activity_report" model="ir.actions.act_window">
+        <field name="name">Activity Analysis</field>
+        <field name="res_model">my.first.customer.activity</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="view_id" ref="view_my_first_activity_report_graph"/>
+    </record>
+
+    <record id="view_my_first_invoice_report_graph" model="ir.ui.view">
+        <field name="name">my.first.invoice.report.graph</field>
+        <field name="model">my.first.customer.invoice</field>
+        <field name="arch" type="xml">
+            <graph string="Invoice Analysis" type="bar">
+                <field name="invoice_date" interval="month" type="row"/>
+                <field name="amount_total" type="measure"/>
+                <field name="amount_paid" type="measure"/>
+                <field name="amount_due" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_my_first_invoice_report_pivot" model="ir.ui.view">
+        <field name="name">my.first.invoice.report.pivot</field>
+        <field name="model">my.first.customer.invoice</field>
+        <field name="arch" type="xml">
+            <pivot string="Invoice Analysis">
+                <field name="invoice_date" interval="month" type="row"/>
+                <field name="payment_status" type="col"/>
+                <field name="amount_total" type="measure"/>
+                <field name="amount_paid" type="measure"/>
+                <field name="amount_due" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_my_first_invoice_report" model="ir.actions.act_window">
+        <field name="name">Invoice Analysis</field>
+        <field name="res_model">my.first.customer.invoice</field>
+        <field name="view_mode">graph,pivot</field>
+        <field name="view_id" ref="view_my_first_invoice_report_graph"/>
+    </record>
+
+    <menuitem
+        id="menu_my_first_reports"
+        name="Reports"
+        sequence="20"
+    />
+
+    <menuitem
+        id="menu_my_first_customer_report"
+        name="Customer Analysis"
+        action="action_my_first_customer_report"
+        parent="menu_my_first_reports"
+        sequence="1"
+    />
+
+    <menuitem
+        id="menu_my_first_activity_report"
+        name="Activity Analysis"
+        action="action_my_first_activity_report"
+        parent="menu_my_first_reports"
+        sequence="2"
+    />
+
+    <menuitem
+        id="menu_my_first_invoice_report"
+        name="Invoice Analysis"
+        action="action_my_first_invoice_report"
+        parent="menu_my_first_reports"
+        sequence="3"
+    />
+
+</odoo>
