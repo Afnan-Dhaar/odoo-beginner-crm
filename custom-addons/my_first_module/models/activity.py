@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class CustomerActivity(models.Model):
@@ -66,6 +66,16 @@ class CustomerActivity(models.Model):
     )
 
     completed_at = fields.Datetime(string="Completed At", readonly=True)
+    completed_by = fields.Many2one(
+        "res.users",
+        string="Completed By",
+        readonly=True,
+    )
+    is_overdue = fields.Boolean(
+        string="Overdue",
+        compute="_compute_is_overdue",
+        search="_search_is_overdue",
+    )
     created_at = fields.Datetime(
         string="Created At",
         readonly=True,
@@ -78,16 +88,54 @@ class CustomerActivity(models.Model):
         default=lambda self: self.env.user,
     )
 
+    @api.depends("status", "due_date")
+    def _compute_is_overdue(self):
+        today = fields.Date.today()
+        for activity in self:
+            activity.is_overdue = bool(
+                activity.status == "planned"
+                and activity.due_date
+                and activity.due_date < today
+            )
+
+    def _search_is_overdue(self, operator, value):
+        if operator not in ("=", "!="):
+            return []
+        is_overdue = value if operator == "=" else not value
+        if is_overdue:
+            return [
+                ("status", "=", "planned"),
+                ("due_date", "<", fields.Date.today()),
+            ]
+        return [
+            "|",
+            ("status", "!=", "planned"),
+            ("due_date", ">=", fields.Date.today()),
+        ]
+
     def action_mark_done(self):
         self.write(
             {
                 "status": "done",
                 "completed_at": fields.Datetime.now(),
+                "completed_by": self.env.user.id,
             }
         )
 
     def action_cancel(self):
-        self.write({"status": "cancelled", "completed_at": False})
+        self.write(
+            {
+                "status": "cancelled",
+                "completed_at": False,
+                "completed_by": False,
+            }
+        )
 
     def action_set_planned(self):
-        self.write({"status": "planned", "completed_at": False})
+        self.write(
+            {
+                "status": "planned",
+                "completed_at": False,
+                "completed_by": False,
+            }
+        )

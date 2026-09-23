@@ -63,6 +63,22 @@ class TestCustomerActivity(TransactionCase):
 
         self.assertEqual(activity.status, "done")
         self.assertTrue(activity.completed_at)
+        self.assertEqual(activity.completed_by, self.env.user)
+
+    def test_past_planned_activity_is_overdue(self):
+        activity = self.env["my.first.customer.activity"].create(
+            {
+                "customer_id": self.customer.id,
+                "title": "Past follow-up",
+                "due_date": date.today() - timedelta(days=1),
+            }
+        )
+
+        self.assertTrue(activity.is_overdue)
+        self.assertIn(
+            activity,
+            self.env["my.first.customer.activity"].search([("is_overdue", "=", True)]),
+        )
 
 
 class TestCustomerInvoice(TransactionCase):
