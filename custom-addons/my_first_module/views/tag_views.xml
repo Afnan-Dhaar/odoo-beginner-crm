@@ -9,6 +9,9 @@
         <field name="arch" type="xml">
             <list string="Customer Tags">
                 <field name="name"/>
+                <field name="color" widget="color_picker"/>
+                <field name="customer_count"/>
+                <field name="active"/>
             </list>
         </field>
     </record>
@@ -23,6 +26,9 @@
                 <sheet>
                     <group string="Tag Information">
                         <field name="name"/>
+                        <field name="color" widget="color_picker"/>
+                        <field name="active"/>
+                        <field name="customer_count" readonly="1"/>
                     </group>
 
                     <notebook>
@@ -49,6 +55,8 @@
         id="menu_my_first_customer_tag"
         name="Customer Tags"
         action="action_my_first_customer_tag"
+        parent="menu_my_first_customer_root"
+        sequence="4"
     />
 
 </odoo>

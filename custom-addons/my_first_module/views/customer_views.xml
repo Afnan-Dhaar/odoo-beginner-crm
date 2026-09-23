@@ -266,9 +266,17 @@
     <!-- ============================= -->
 
     <menuitem
+        id="menu_my_first_customer_root"
+        name="Customers"
+        sequence="10"
+    />
+
+    <menuitem
         id="menu_my_first_customer"
         name="Customers"
         action="action_my_first_customer"
+        parent="menu_my_first_customer_root"
+        sequence="1"
     />
 
 </odoo>

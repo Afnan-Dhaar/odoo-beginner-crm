@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class CustomerNote(models.Model):
@@ -78,12 +78,43 @@ class CustomerNote(models.Model):
         readonly=True,
     )
 
+    is_overdue = fields.Boolean(
+        string="Overdue",
+        compute="_compute_is_overdue",
+        search="_search_is_overdue",
+    )
+
     created_by = fields.Many2one(
         "res.users",
         string="Created By",
         readonly=True,
         default=lambda self: self.env.user,
     )
+
+    @api.depends("status", "follow_up_date")
+    def _compute_is_overdue(self):
+        today = fields.Date.today()
+        for note in self:
+            note.is_overdue = bool(
+                note.status == "open"
+                and note.follow_up_date
+                and note.follow_up_date < today
+            )
+
+    def _search_is_overdue(self, operator, value):
+        if operator not in ("=", "!="):
+            return []
+        is_overdue = value if operator == "=" else not value
+        if is_overdue:
+            return [
+                ("status", "=", "open"),
+                ("follow_up_date", "<", fields.Date.today()),
+            ]
+        return [
+            "|",
+            ("status", "!=", "open"),
+            ("follow_up_date", ">=", fields.Date.today()),
+        ]
 
     def write(self, vals):
         vals["updated_at"] = fields.Datetime.now()

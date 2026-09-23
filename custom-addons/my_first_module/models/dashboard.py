@@ -99,9 +99,7 @@ class CrmDashboard(models.Model):
 
     def action_open_unpaid_invoices(self):
         action = self._open_action("my.first.customer.invoice", "Unpaid Invoices")
-        action["domain"] = [
-            ("payment_status", "in", ["not_paid", "partially_paid"])
-        ]
+        action["domain"] = [("payment_status", "in", ["not_paid", "partially_paid"])]
         return action
 
     def action_create_customer(self):
