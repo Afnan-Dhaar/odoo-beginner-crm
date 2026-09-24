@@ -23,6 +23,9 @@
         "views/dashboard_views.xml",
         "views/report_views.xml",
     ],
+    "demo": [
+        "demo/demo.xml",
+    ],
     "installable": True,
     "application": True,
 }

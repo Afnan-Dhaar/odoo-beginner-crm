@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <record id="demo_company_tech" model="my.first.company">
+        <field name="name">Northstar Technologies</field>
+        <field name="email">hello@northstar.example.com</field>
+        <field name="phone">+1 555 0100</field>
+        <field name="website">https://northstar.example.com</field>
+        <field name="industry">Software</field>
+        <field name="city">Austin</field>
+        <field name="state">Texas</field>
+        <field name="country">United States</field>
+    </record>
+
+    <record id="demo_company_consulting" model="my.first.company">
+        <field name="name">Brightpath Consulting</field>
+        <field name="email">contact@brightpath.example.com</field>
+        <field name="phone">+1 555 0110</field>
+        <field name="industry">Consulting</field>
+        <field name="city">Denver</field>
+        <field name="state">Colorado</field>
+        <field name="country">United States</field>
+    </record>
+
+    <record id="demo_tag_priority" model="my.first.customer.tag">
+        <field name="name">Priority</field>
+        <field name="color">2</field>
+    </record>
+
+    <record id="demo_tag_renewal" model="my.first.customer.tag">
+        <field name="name">Renewal</field>
+        <field name="color">4</field>
+    </record>
+
+    <record id="demo_tag_new_business" model="my.first.customer.tag">
+        <field name="name">New Business</field>
+        <field name="color">7</field>
+    </record>
+
+    <record id="demo_customer_afnan" model="my.first.customer">
+        <field name="name">Afnan Dhaar</field>
+        <field name="email">afnan@example.com</field>
+        <field name="phone">+1 555 0120</field>
+        <field name="category">customer</field>
+        <field name="status">active</field>
+        <field name="company_id" ref="demo_company_tech"/>
+        <field name="tag_ids" eval="[(6, 0, [ref('demo_tag_priority'), ref('demo_tag_renewal')])]"/>
+        <field name="city">Austin</field>
+        <field name="state">Texas</field>
+        <field name="country">United States</field>
+    </record>
+
+    <record id="demo_customer_maya" model="my.first.customer">
+        <field name="name">Maya Chen</field>
+        <field name="email">maya@example.com</field>
+        <field name="phone">+1 555 0130</field>
+        <field name="category">prospect</field>
+        <field name="status">active</field>
+        <field name="company_id" ref="demo_company_consulting"/>
+        <field name="tag_ids" eval="[(6, 0, [ref('demo_tag_new_business')])]"/>
+        <field name="city">Denver</field>
+        <field name="state">Colorado</field>
+        <field name="country">United States</field>
+    </record>
+
+    <record id="demo_customer_omar" model="my.first.customer">
+        <field name="name">Omar Rahman</field>
+        <field name="email">omar@example.com</field>
+        <field name="phone">+1 555 0140</field>
+        <field name="category">lead</field>
+        <field name="status">new</field>
+        <field name="tag_ids" eval="[(6, 0, [ref('demo_tag_new_business')])]"/>
+        <field name="city">Chicago</field>
+        <field name="state">Illinois</field>
+        <field name="country">United States</field>
+    </record>
+
+    <record id="demo_note_afnan_call" model="my.first.customer.note">
+        <field name="customer_id" ref="demo_customer_afnan"/>
+        <field name="title">Quarterly review completed</field>
+        <field name="note">Reviewed the current account and discussed the next renewal cycle.</field>
+        <field name="note_type">call</field>
+        <field name="status">done</field>
+        <field name="priority">high</field>
+        <field name="contacted">True</field>
+    </record>
+
+    <record id="demo_note_maya_followup" model="my.first.customer.note">
+        <field name="customer_id" ref="demo_customer_maya"/>
+        <field name="title">Send proposal</field>
+        <field name="note">Prepare and send the implementation proposal.</field>
+        <field name="note_type">follow_up</field>
+        <field name="priority">normal</field>
+        <field name="follow_up_date" eval="(DateTime.today() + relativedelta(days=7)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="demo_activity_afnan_renewal" model="my.first.customer.activity">
+        <field name="customer_id" ref="demo_customer_afnan"/>
+        <field name="activity_type">meeting</field>
+        <field name="title">Renewal planning meeting</field>
+        <field name="description">Confirm renewal scope and timeline with the customer.</field>
+        <field name="assigned_to" ref="base.user_admin"/>
+        <field name="due_date" eval="(DateTime.today() + relativedelta(days=5)).strftime('%Y-%m-%d')"/>
+        <field name="priority">high</field>
+    </record>
+
+    <record id="demo_activity_maya_overdue" model="my.first.customer.activity">
+        <field name="customer_id" ref="demo_customer_maya"/>
+        <field name="activity_type">call</field>
+        <field name="title">Follow up on proposal</field>
+        <field name="description">Call the customer to answer proposal questions.</field>
+        <field name="assigned_to" ref="base.user_admin"/>
+        <field name="due_date" eval="(DateTime.today() - relativedelta(days=2)).strftime('%Y-%m-%d')"/>
+        <field name="priority">urgent</field>
+    </record>
+
+    <record id="demo_invoice_afnan" model="my.first.customer.invoice">
+        <field name="customer_id" ref="demo_customer_afnan"/>
+        <field name="invoice_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+        <field name="due_date" eval="(DateTime.today() + relativedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="amount_total">2500</field>
+        <field name="state">posted</field>
+    </record>
+
+    <record id="demo_payment_afnan" model="my.first.customer.payment">
+        <field name="invoice_id" ref="demo_invoice_afnan"/>
+        <field name="amount">1000</field>
+        <field name="payment_method">bank</field>
+        <field name="reference">DEMO-PAY-001</field>
+    </record>
+
+    <record id="demo_invoice_maya" model="my.first.customer.invoice">
+        <field name="customer_id" ref="demo_customer_maya"/>
+        <field name="invoice_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
+        <field name="due_date" eval="(DateTime.today() + relativedelta(days=14)).strftime('%Y-%m-%d')"/>
+        <field name="amount_total">1200</field>
+    </record>
+
+</odoo>
