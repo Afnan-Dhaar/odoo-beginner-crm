@@ -61,4 +61,5 @@ jobs:
           -d odoo_test
           -i my_first_module
           --test-enable
+          --test-tags=/my_first_module
           --stop-after-init
