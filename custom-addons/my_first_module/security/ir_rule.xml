@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <record id="rule_my_first_customer_activity_user" model="ir.rule">
+        <field name="name">CRM users see their activities</field>
+        <field name="model_id" ref="model_my_first_customer_activity"/>
+        <field name="domain_force">['|', ('assigned_to', '=', user.id), ('created_by', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('group_my_first_crm_user'))]"/>
+    </record>
+</odoo>

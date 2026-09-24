@@ -8,7 +8,9 @@
     "license": "LGPL-3",
     "depends": ["base"],
     "data": [
+        "security/groups.xml",
         "security/ir.model.access.csv",
+        "security/ir_rule.xml",
         "data/customer_sequence.xml",
         "data/invoice_sequence.xml",
         "data/dashboard_data.xml",

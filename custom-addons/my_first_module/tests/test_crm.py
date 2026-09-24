@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests.common import TransactionCase
 
 
@@ -163,3 +163,75 @@ class TestCustomerInvoice(TransactionCase):
                     "amount": 25,
                 }
             )
+
+    def test_posted_invoice_can_be_cancelled(self):
+        invoice = self.invoice_model.create(
+            {
+                "customer_id": self.customer.id,
+                "amount_total": 100,
+            }
+        )
+        invoice.action_post()
+        invoice.action_cancel()
+
+        self.assertEqual(invoice.state, "cancelled")
+
+
+class TestCrmSecurity(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user_group = cls.env.ref("my_first_module.group_my_first_crm_user")
+        cls.manager_group = cls.env.ref("my_first_module.group_my_first_crm_manager")
+        cls.crm_user = cls.env["res.users"].create(
+            {
+                "name": "CRM User Test",
+                "login": "crm_user_test",
+                "email": "crm_user_test@example.com",
+                "group_ids": [(6, 0, [cls.user_group.id])],
+            }
+        )
+        cls.crm_manager = cls.env["res.users"].create(
+            {
+                "name": "CRM Manager Test",
+                "login": "crm_manager_test",
+                "email": "crm_manager_test@example.com",
+                "group_ids": [(6, 0, [cls.manager_group.id])],
+            }
+        )
+
+    def test_regular_user_sees_only_owned_activities(self):
+        customer = self.env["my.first.customer"].create({"name": "Security Customer"})
+        activity = self.env["my.first.customer.activity"].create(
+            {
+                "customer_id": customer.id,
+                "title": "Manager activity",
+                "assigned_to": self.crm_manager.id,
+            }
+        )
+
+        user_activities = self.env["my.first.customer.activity"].with_user(
+            self.crm_user
+        )
+        manager_activities = self.env["my.first.customer.activity"].with_user(
+            self.crm_manager
+        )
+
+        self.assertNotIn(activity, user_activities.search([]))
+        self.assertIn(activity, manager_activities.search([]))
+
+    def test_regular_user_cannot_edit_invoices(self):
+        customer = self.env["my.first.customer"].create(
+            {"name": "Invoice Security Customer"}
+        )
+        invoice = self.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": customer.id,
+                "amount_total": 100,
+            }
+        )
+
+        with self.assertRaises(AccessError):
+            self.env["my.first.customer.invoice"].with_user(self.crm_user).browse(
+                invoice.id
+            ).write({"notes": "Not allowed"})

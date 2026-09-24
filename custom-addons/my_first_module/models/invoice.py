@@ -115,7 +115,11 @@ class CustomerInvoice(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
-        if self.filtered(lambda invoice: invoice.state == "posted") and vals:
+        if (
+            self.filtered(lambda invoice: invoice.state == "posted")
+            and vals
+            and not self.env.context.get("allow_invoice_state_change")
+        ):
             raise ValidationError("Posted invoices cannot be edited.")
         return super().write(vals)
 
