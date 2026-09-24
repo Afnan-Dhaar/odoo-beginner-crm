@@ -34,11 +34,11 @@
                 <sheet>
                     <group string="Invoice Details">
                         <field name="name" readonly="1"/>
-                        <field name="customer_id"/>
-                        <field name="currency_id"/>
-                        <field name="invoice_date"/>
-                        <field name="due_date"/>
-                        <field name="amount_total"/>
+                        <field name="customer_id" readonly="state != 'draft'"/>
+                        <field name="currency_id" readonly="state != 'draft'"/>
+                        <field name="invoice_date" readonly="state != 'draft'"/>
+                        <field name="due_date" readonly="state != 'draft'"/>
+                        <field name="amount_total" readonly="state != 'draft'"/>
                         <field name="payment_status" readonly="1"/>
                     </group>
                     <group string="Payment Summary">

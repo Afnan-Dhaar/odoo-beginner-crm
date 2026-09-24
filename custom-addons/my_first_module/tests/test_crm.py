@@ -123,3 +123,43 @@ class TestCustomerInvoice(TransactionCase):
                     "amount": 101,
                 }
             )
+
+    def test_due_date_cannot_precede_invoice_date(self):
+        with self.assertRaises(ValidationError):
+            self.invoice_model.create(
+                {
+                    "customer_id": self.customer.id,
+                    "amount_total": 100,
+                    "invoice_date": date.today(),
+                    "due_date": date.today() - timedelta(days=1),
+                }
+            )
+
+    def test_posted_invoice_cannot_be_edited(self):
+        invoice = self.invoice_model.create(
+            {
+                "customer_id": self.customer.id,
+                "amount_total": 100,
+            }
+        )
+        invoice.action_post()
+
+        with self.assertRaises(ValidationError):
+            invoice.write({"amount_total": 120})
+
+    def test_cancelled_invoice_cannot_receive_payment(self):
+        invoice = self.invoice_model.create(
+            {
+                "customer_id": self.customer.id,
+                "amount_total": 100,
+            }
+        )
+        invoice.action_cancel()
+
+        with self.assertRaises(ValidationError):
+            self.payment_model.create(
+                {
+                    "invoice_id": invoice.id,
+                    "amount": 25,
+                }
+            )

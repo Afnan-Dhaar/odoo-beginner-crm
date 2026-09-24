@@ -1,5 +1,6 @@
-from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+
+from odoo import api, fields, models
 
 
 class CustomerInvoice(models.Model):
@@ -98,6 +99,12 @@ class CustomerInvoice(models.Model):
             if invoice.amount_total <= 0:
                 raise ValidationError("Invoice total must be greater than zero.")
 
+    @api.constrains("invoice_date", "due_date")
+    def _check_due_date(self):
+        for invoice in self:
+            if invoice.due_date and invoice.due_date < invoice.invoice_date:
+                raise ValidationError("Due date cannot be before the invoice date.")
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -107,14 +114,19 @@ class CustomerInvoice(models.Model):
                 )
         return super().create(vals_list)
 
+    def write(self, vals):
+        if self.filtered(lambda invoice: invoice.state == "posted") and vals:
+            raise ValidationError("Posted invoices cannot be edited.")
+        return super().write(vals)
+
     def action_post(self):
         self.write({"state": "posted"})
 
     def action_cancel(self):
-        self.write({"state": "cancelled"})
+        self.with_context(allow_invoice_state_change=True).write({"state": "cancelled"})
 
     def action_reset_to_draft(self):
-        self.write({"state": "draft"})
+        self.with_context(allow_invoice_state_change=True).write({"state": "draft"})
 
 
 class CustomerPayment(models.Model):
@@ -163,11 +175,38 @@ class CustomerPayment(models.Model):
     reference = fields.Char(string="Payment Reference")
     notes = fields.Text(string="Notes")
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        invoice_ids = {
+            vals.get("invoice_id") for vals in vals_list if vals.get("invoice_id")
+        }
+        cancelled_invoices = (
+            self.env["my.first.customer.invoice"]
+            .browse(list(invoice_ids))
+            .filtered(lambda invoice: invoice.state == "cancelled")
+        )
+        if cancelled_invoices:
+            raise ValidationError("Cancelled invoices cannot receive payments.")
+        return super().create(vals_list)
+
+    def write(self, vals):
+        invoices = self.mapped("invoice_id")
+        if vals.get("invoice_id"):
+            invoices |= self.env["my.first.customer.invoice"].browse(vals["invoice_id"])
+        if invoices.filtered(lambda invoice: invoice.state == "cancelled"):
+            raise ValidationError("Cancelled invoices cannot receive payments.")
+        return super().write(vals)
+
     @api.constrains("amount", "invoice_id")
     def _check_payment_amount(self):
         for payment in self:
             if payment.amount <= 0:
                 raise ValidationError("Payment amount must be greater than zero.")
             other_payments = payment.invoice_id.payment_ids - payment
-            if sum(other_payments.mapped("amount")) + payment.amount > payment.invoice_id.amount_total:
-                raise ValidationError("Payments cannot be greater than the invoice total.")
+            if (
+                sum(other_payments.mapped("amount")) + payment.amount
+                > payment.invoice_id.amount_total
+            ):
+                raise ValidationError(
+                    "Payments cannot be greater than the invoice total."
+                )
