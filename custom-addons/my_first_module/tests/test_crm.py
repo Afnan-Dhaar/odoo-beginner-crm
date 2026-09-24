@@ -25,6 +25,36 @@ class TestCustomer(TransactionCase):
         self.assertEqual(customer.total_paid, 0)
         self.assertEqual(customer.total_due, 0)
 
+    def test_customer_timeline_combines_customer_events(self):
+        customer = self.customer_model.create({"name": "Timeline Customer"})
+        self.env["my.first.customer.note"].create(
+            {
+                "customer_id": customer.id,
+                "title": "Welcome call",
+                "note": "Initial conversation",
+            }
+        )
+        self.env["my.first.customer.activity"].create(
+            {
+                "customer_id": customer.id,
+                "title": "Schedule meeting",
+            }
+        )
+        self.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": customer.id,
+                "amount_total": 100,
+            }
+        )
+
+        customer.action_refresh_timeline()
+
+        self.assertEqual(len(customer.timeline_ids), 3)
+        self.assertSetEqual(
+            set(customer.timeline_ids.mapped("event_type")),
+            {"note", "activity", "invoice"},
+        )
+
     def test_invalid_email_is_rejected(self):
         with self.assertRaises(ValidationError):
             self.customer_model.create(

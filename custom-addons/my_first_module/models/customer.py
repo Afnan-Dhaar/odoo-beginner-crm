@@ -63,6 +63,12 @@ class Customer(models.Model):
         string="Invoices",
     )
 
+    timeline_ids = fields.One2many(
+        "my.first.customer.timeline",
+        "customer_id",
+        string="Timeline",
+    )
+
     tag_ids = fields.Many2many(
         "my.first.customer.tag",
         "customer_tag_rel",
@@ -173,6 +179,58 @@ class Customer(models.Model):
     def action_deactivate(self):
         for customer in self:
             customer.status = "inactive"
+
+    def action_refresh_timeline(self):
+        Timeline = self.env["my.first.customer.timeline"]
+        for customer in self:
+            customer.timeline_ids.unlink()
+            events = []
+            for note in customer.note_ids:
+                events.append(
+                    {
+                        "event_type": "note",
+                        "title": note.title,
+                        "description": note.note,
+                        "event_date": note.updated_at or note.created_at,
+                        "source_ref": f"Note: {note.id}",
+                    }
+                )
+            for activity in customer.activity_ids:
+                events.append(
+                    {
+                        "event_type": "activity",
+                        "title": activity.title,
+                        "description": activity.description,
+                        "event_date": activity.created_at,
+                        "source_ref": f"Activity: {activity.id}",
+                    }
+                )
+            for invoice in customer.invoice_ids:
+                events.append(
+                    {
+                        "event_type": "invoice",
+                        "title": invoice.name,
+                        "description": f"Invoice total: {invoice.amount_total}",
+                        "event_date": fields.Datetime.to_datetime(invoice.invoice_date),
+                        "source_ref": f"Invoice: {invoice.id}",
+                    }
+                )
+                for payment in invoice.payment_ids:
+                    events.append(
+                        {
+                            "event_type": "payment",
+                            "title": f"Payment for {invoice.name}",
+                            "description": f"Payment amount: {payment.amount}",
+                            "event_date": fields.Datetime.to_datetime(
+                                payment.payment_date
+                            ),
+                            "source_ref": f"Payment: {payment.id}",
+                        }
+                    )
+            for event in events:
+                event["customer_id"] = customer.id
+            if events:
+                Timeline.create(events)
 
     def action_test_recordset(self):
         print("Number of records:", len(self))
