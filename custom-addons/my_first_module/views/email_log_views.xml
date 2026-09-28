@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Email Log List View -->
+    <record id="view_my_first_customer_email_list" model="ir.ui.view">
+        <field name="name">my.first.customer.email.list</field>
+        <field name="model">my.first.customer.email</field>
+        <field name="arch" type="xml">
+            <list string="Email Communications" decoration-info="direction == 'incoming'">
+                <field name="date"/>
+                <field name="subject"/>
+                <field name="customer_id"/>
+                <field name="recipient"/>
+                <field name="sender"/>
+                <field name="direction"/>
+                <field name="state"/>
+                <field name="invoice_id"/>
+                <field name="author_id"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Email Log Form View -->
+    <record id="view_my_first_customer_email_form" model="ir.ui.view">
+        <field name="name">my.first.customer.email.form</field>
+        <field name="model">my.first.customer.email</field>
+        <field name="arch" type="xml">
+            <form string="Email Communication">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,sent,received"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="subject"/>
+                        <h1>
+                            <field name="subject" placeholder="e.g. Follow-up on project proposal"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Addresses">
+                            <field name="customer_id"/>
+                            <field name="recipient" placeholder="client@example.com"/>
+                            <field name="sender"/>
+                            <field name="cc" placeholder="optional cc emails"/>
+                        </group>
+                        <group string="Log Details">
+                            <field name="date"/>
+                            <field name="direction"/>
+                            <field name="invoice_id"/>
+                            <field name="author_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Message Body">
+                            <field name="body" widget="html" placeholder="Write or paste the email communication content..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Email Log Search View -->
+    <record id="view_my_first_customer_email_search" model="ir.ui.view">
+        <field name="name">my.first.customer.email.search</field>
+        <field name="model">my.first.customer.email</field>
+        <field name="arch" type="xml">
+            <search string="Search Emails">
+                <field name="subject"/>
+                <field name="customer_id"/>
+                <field name="recipient"/>
+                <field name="sender"/>
+                <field name="invoice_id"/>
+                <separator/>
+                <filter name="filter_outgoing" string="Outgoing" domain="[('direction', '=', 'outgoing')]"/>
+                <filter name="filter_incoming" string="Incoming" domain="[('direction', '=', 'incoming')]"/>
+                <filter name="filter_sent" string="Sent" domain="[('state', '=', 'sent')]"/>
+                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <separator/>
+                <group>
+                    <filter name="group_by_customer" string="Customer" context="{'group_by': 'customer_id'}"/>
+                    <filter name="group_by_direction" string="Direction" context="{'group_by': 'direction'}"/>
+                    <filter name="group_by_invoice" string="Invoice" context="{'group_by': 'invoice_id'}"/>
+                    <filter name="group_by_date" string="Date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Email Log Window Action -->
+    <record id="action_my_first_customer_email" model="ir.actions.act_window">
+        <field name="name">Emails</field>
+        <field name="res_model">my.first.customer.email</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_my_first_customer_email_search"/>
+    </record>
+
+</odoo>

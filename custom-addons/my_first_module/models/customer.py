@@ -74,6 +74,16 @@ class Customer(models.Model):
         compute="_compute_document_count",
     )
 
+    email_ids = fields.One2many(
+        "my.first.customer.email",
+        "customer_id",
+        string="Emails",
+    )
+    email_count = fields.Integer(
+        string="Email Count",
+        compute="_compute_email_count",
+    )
+
     timeline_ids = fields.One2many(
         "my.first.customer.timeline",
         "customer_id",
@@ -149,6 +159,7 @@ class Customer(models.Model):
         "note_ids.created_at",
         "note_ids.updated_at",
         "activity_ids.completed_at",
+        "email_ids.date",
         "invoice_ids.amount_total",
         "invoice_ids.amount_paid",
         "invoice_ids.amount_due",
@@ -161,6 +172,7 @@ class Customer(models.Model):
                     customer.note_ids.mapped("updated_at")
                     + customer.note_ids.mapped("created_at")
                     + customer.activity_ids.mapped("completed_at")
+                    + customer.email_ids.mapped("date")
                 )
                 if date_value
             ]
@@ -197,6 +209,42 @@ class Customer(models.Model):
             "view_mode": "list,form",
             "domain": [("customer_id", "=", self.id)],
             "context": {"default_customer_id": self.id},
+        }
+
+    @api.depends("email_ids")
+    def _compute_email_count(self):
+        for customer in self:
+            customer.email_count = len(customer.email_ids)
+
+    def action_view_emails(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": f"Emails - {self.name}",
+            "res_model": "my.first.customer.email",
+            "view_mode": "list,form",
+            "domain": [("customer_id", "=", self.id)],
+            "context": {
+                "default_customer_id": self.id,
+                "default_recipient": self.email,
+            },
+        }
+
+    def action_send_email(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": f"Compose Email - {self.name}",
+            "res_model": "my.first.customer.email",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_customer_id": self.id,
+                "default_recipient": self.email,
+                "default_sender": self.env.user.email or self.env.user.name,
+                "default_direction": "outgoing",
+                "default_state": "sent",
+            },
         }
 
     def action_activate(self):
@@ -270,6 +318,22 @@ class Customer(models.Model):
                         "description": desc,
                         "event_date": doc.created_at or fields.Datetime.now(),
                         "source_ref": f"Document: {doc.id}",
+                    }
+                )
+            for email_log in customer.email_ids:
+                direction_label = (
+                    "Sent to" if email_log.direction == "outgoing" else "Received from"
+                )
+                desc = f"{direction_label}: {email_log.recipient if email_log.direction == 'outgoing' else email_log.sender}"
+                if email_log.invoice_id:
+                    desc += f" | Invoice: {email_log.invoice_id.name}"
+                events.append(
+                    {
+                        "event_type": "email",
+                        "title": f"Email: {email_log.subject}",
+                        "description": desc,
+                        "event_date": email_log.date or fields.Datetime.now(),
+                        "source_ref": f"Email: {email_log.id}",
                     }
                 )
             for event in events:

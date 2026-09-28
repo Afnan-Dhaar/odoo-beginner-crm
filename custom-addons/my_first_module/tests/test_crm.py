@@ -57,13 +57,21 @@ class TestCustomer(TransactionCase):
                 "file_name": "contract.pdf",
             }
         )
+        self.env["my.first.customer.email"].create(
+            {
+                "customer_id": customer.id,
+                "subject": "Kickoff Meeting Invite",
+                "recipient": "timeline@example.com",
+                "body": "<p>Looking forward to our call.</p>",
+            }
+        )
 
         customer.action_refresh_timeline()
 
-        self.assertEqual(len(customer.timeline_ids), 4)
+        self.assertEqual(len(customer.timeline_ids), 5)
         self.assertSetEqual(
             set(customer.timeline_ids.mapped("event_type")),
-            {"note", "activity", "invoice", "document"},
+            {"note", "activity", "invoice", "document", "email"},
         )
 
     def test_invalid_email_is_rejected(self):
@@ -297,6 +305,25 @@ class TestCrmSecurity(TransactionCase):
         self.assertTrue(doc.id)
         self.assertEqual(doc.created_by, self.crm_user)
 
+    def test_regular_user_can_manage_emails(self):
+        customer = self.env["my.first.customer"].create(
+            {"name": "Email Security Customer", "email": "sec@example.com"}
+        )
+        email_log = (
+            self.env["my.first.customer.email"]
+            .with_user(self.crm_user)
+            .create(
+                {
+                    "customer_id": customer.id,
+                    "subject": "User Outreach",
+                    "recipient": customer.email,
+                    "body": "<p>Reaching out.</p>",
+                }
+            )
+        )
+        self.assertTrue(email_log.id)
+        self.assertEqual(email_log.author_id, self.crm_user)
+
 
 class TestCustomerDocument(TransactionCase):
     @classmethod
@@ -371,3 +398,110 @@ class TestCustomerDocument(TransactionCase):
                     "file": "Y29udHJhY3Q=",
                 }
             )
+
+
+class TestCustomerEmail(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.customer = cls.env["my.first.customer"].create(
+            {
+                "name": "Email Test Customer",
+                "email": "customer@example.com",
+            }
+        )
+        cls.other_customer = cls.env["my.first.customer"].create(
+            {"name": "Other Email Customer"}
+        )
+        cls.invoice = cls.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": cls.customer.id,
+                "amount_total": 450,
+            }
+        )
+        cls.other_invoice = cls.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": cls.other_customer.id,
+                "amount_total": 900,
+            }
+        )
+
+    def test_email_creation_and_autofill(self):
+        email_log = self.env["my.first.customer.email"].create(
+            {
+                "customer_id": self.customer.id,
+                "recipient": self.customer.email,
+                "subject": "Project Proposal Discussion",
+                "body": "<p>Thank you for your interest.</p>",
+            }
+        )
+
+        self.assertEqual(self.customer.email_count, 1)
+        self.assertIn(email_log, self.customer.email_ids)
+        self.assertTrue(self.customer.last_contact_date)
+
+        action = self.customer.action_view_emails()
+        self.assertEqual(action["res_model"], "my.first.customer.email")
+        self.assertIn(("customer_id", "=", self.customer.id), action["domain"])
+
+    def test_email_linked_to_invoice(self):
+        email_log = self.env["my.first.customer.email"].create(
+            {
+                "customer_id": self.customer.id,
+                "invoice_id": self.invoice.id,
+                "recipient": self.customer.email,
+                "subject": f"Payment Request for {self.invoice.name}",
+                "body": "<p>Please find invoice details attached.</p>",
+            }
+        )
+
+        self.assertEqual(self.invoice.email_count, 1)
+        self.assertIn(email_log, self.invoice.email_ids)
+
+        action = self.invoice.action_view_emails()
+        self.assertEqual(action["res_model"], "my.first.customer.email")
+        self.assertIn(("invoice_id", "=", self.invoice.id), action["domain"])
+
+    def test_email_invoice_mismatch_raises_validation_error(self):
+        with self.assertRaises(ValidationError):
+            self.env["my.first.customer.email"].create(
+                {
+                    "customer_id": self.customer.id,
+                    "invoice_id": self.other_invoice.id,
+                    "recipient": "test@example.com",
+                    "subject": "Mismatched invoice test",
+                    "body": "Invalid link.",
+                }
+            )
+
+    def test_invalid_recipient_email_raises_validation_error(self):
+        with self.assertRaises(ValidationError):
+            self.env["my.first.customer.email"].create(
+                {
+                    "customer_id": self.customer.id,
+                    "recipient": "invalid-recipient",
+                    "subject": "Invalid email test",
+                    "body": "Should fail.",
+                }
+            )
+
+    def test_compose_actions(self):
+        compose_cust = self.customer.action_send_email()
+        self.assertEqual(compose_cust["res_model"], "my.first.customer.email")
+        self.assertEqual(compose_cust["target"], "new")
+        self.assertEqual(
+            compose_cust["context"]["default_customer_id"], self.customer.id
+        )
+        self.assertEqual(
+            compose_cust["context"]["default_recipient"], self.customer.email
+        )
+
+        compose_inv = self.invoice.action_send_email()
+        self.assertEqual(compose_inv["res_model"], "my.first.customer.email")
+        self.assertEqual(compose_inv["target"], "new")
+        self.assertEqual(
+            compose_inv["context"]["default_invoice_id"], self.invoice.id
+        )
+        self.assertEqual(
+            compose_inv["context"]["default_recipient"], self.customer.email
+        )

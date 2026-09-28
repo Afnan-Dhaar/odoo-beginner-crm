@@ -156,4 +156,27 @@
         <field name="description">Signed contract linked to initial onboarding invoice.</field>
     </record>
 
+    <record id="demo_email_proposal_maya" model="my.first.customer.email">
+        <field name="subject">Follow-up: Enterprise Solution Proposal</field>
+        <field name="customer_id" ref="demo_customer_maya"/>
+        <field name="sender">sales@example.com</field>
+        <field name="recipient">maya@example.com</field>
+        <field name="direction">outgoing</field>
+        <field name="state">sent</field>
+        <field name="date" eval="(DateTime.today() - relativedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="body">&lt;p&gt;Hi Maya,&lt;br/&gt;&lt;br/&gt;Thank you for discussing your requirements yesterday. Attached is the preliminary proposal for your review.&lt;br/&gt;&lt;br/&gt;Best regards,&lt;br/&gt;Sales Team&lt;/p&gt;</field>
+    </record>
+
+    <record id="demo_email_invoice_afnan" model="my.first.customer.email">
+        <field name="subject">Invoice Notification - Northstar Technologies</field>
+        <field name="customer_id" ref="demo_customer_afnan"/>
+        <field name="invoice_id" ref="demo_invoice_afnan"/>
+        <field name="sender">billing@example.com</field>
+        <field name="recipient">afnan@example.com</field>
+        <field name="direction">outgoing</field>
+        <field name="state">sent</field>
+        <field name="date" eval="DateTime.today().strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="body">&lt;p&gt;Dear Afnan,&lt;br/&gt;&lt;br/&gt;Your latest invoice has been issued and is available for review.&lt;br/&gt;&lt;br/&gt;Thank you for your business!&lt;/p&gt;</field>
+    </record>
+
 </odoo>

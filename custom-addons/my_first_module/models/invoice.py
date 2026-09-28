@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from odoo.exceptions import ValidationError
 
 from odoo import api, fields, models
@@ -51,6 +52,15 @@ class CustomerInvoice(models.Model):
     document_count = fields.Integer(
         string="Document Count",
         compute="_compute_document_count",
+    )
+    email_ids = fields.One2many(
+        "my.first.customer.email",
+        "invoice_id",
+        string="Emails",
+    )
+    email_count = fields.Integer(
+        string="Email Count",
+        compute="_compute_email_count",
     )
     amount_paid = fields.Monetary(
         string="Amount Paid",
@@ -148,6 +158,45 @@ class CustomerInvoice(models.Model):
             "context": {
                 "default_customer_id": self.customer_id.id,
                 "default_invoice_id": self.id,
+            },
+        }
+
+    @api.depends("email_ids")
+    def _compute_email_count(self):
+        for invoice in self:
+            invoice.email_count = len(invoice.email_ids)
+
+    def action_view_emails(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": f"Emails - {self.name}",
+            "res_model": "my.first.customer.email",
+            "view_mode": "list,form",
+            "domain": [("invoice_id", "=", self.id)],
+            "context": {
+                "default_customer_id": self.customer_id.id,
+                "default_invoice_id": self.id,
+                "default_recipient": self.customer_id.email,
+            },
+        }
+
+    def action_send_email(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": f"Compose Email - {self.name}",
+            "res_model": "my.first.customer.email",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_customer_id": self.customer_id.id,
+                "default_invoice_id": self.id,
+                "default_recipient": self.customer_id.email,
+                "default_subject": f"Invoice {self.name} - {self.customer_id.name}",
+                "default_sender": self.env.user.email or self.env.user.name,
+                "default_direction": "outgoing",
+                "default_state": "sent",
             },
         }
 

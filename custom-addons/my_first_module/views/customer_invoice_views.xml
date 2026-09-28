@@ -29,12 +29,16 @@
                     <button name="action_post" string="Post" type="object" class="btn-primary" invisible="state != 'draft'"/>
                     <button name="action_cancel" string="Cancel" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <button name="action_reset_to_draft" string="Reset to Draft" type="object" class="btn-secondary" invisible="state != 'cancelled'"/>
+                    <button name="action_send_email" string="Send Email" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_documents" type="object" class="oe_stat_button" icon="fa-paperclip">
                             <field name="document_count" widget="statinfo" string="Documents"/>
+                        </button>
+                        <button name="action_view_emails" type="object" class="oe_stat_button" icon="fa-envelope">
+                            <field name="email_count" widget="statinfo" string="Emails"/>
                         </button>
                     </div>
                     <group string="Invoice Details">
@@ -70,6 +74,18 @@
                                     <field name="file" widget="binary" filename="file_name"/>
                                     <field name="created_at"/>
                                     <field name="created_by"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Emails">
+                            <field name="email_ids" context="{'default_customer_id': customer_id, 'default_invoice_id': id, 'default_recipient': customer_id.email}">
+                                <list>
+                                    <field name="date"/>
+                                    <field name="subject"/>
+                                    <field name="recipient"/>
+                                    <field name="direction"/>
+                                    <field name="state"/>
+                                    <field name="author_id"/>
                                 </list>
                             </field>
                         </page>

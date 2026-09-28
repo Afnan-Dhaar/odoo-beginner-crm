@@ -21,6 +21,7 @@
         "views/customer_activity_views.xml",
         "views/customer_invoice_views.xml",
         "views/document_views.xml",
+        "views/email_log_views.xml",
         "views/dashboard_views.xml",
         "views/report_views.xml",
     ],
