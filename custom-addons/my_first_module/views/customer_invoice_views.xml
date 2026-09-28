@@ -32,6 +32,11 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_documents" type="object" class="oe_stat_button" icon="fa-paperclip">
+                            <field name="document_count" widget="statinfo" string="Documents"/>
+                        </button>
+                    </div>
                     <group string="Invoice Details">
                         <field name="name" readonly="1"/>
                         <field name="customer_id" readonly="state != 'draft'"/>
@@ -53,6 +58,18 @@
                                     <field name="amount"/>
                                     <field name="payment_method"/>
                                     <field name="reference"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Documents">
+                            <field name="document_ids" context="{'default_customer_id': customer_id, 'default_invoice_id': id}">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="document_type"/>
+                                    <field name="file_name"/>
+                                    <field name="file" widget="binary" filename="file_name"/>
+                                    <field name="created_at"/>
+                                    <field name="created_by"/>
                                 </list>
                             </field>
                         </page>

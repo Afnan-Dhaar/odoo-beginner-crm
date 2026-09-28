@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from odoo.exceptions import ValidationError
 
 from odoo import api, fields, models
@@ -61,6 +62,16 @@ class Customer(models.Model):
         "my.first.customer.invoice",
         "customer_id",
         string="Invoices",
+    )
+
+    document_ids = fields.One2many(
+        "my.first.customer.document",
+        "customer_id",
+        string="Documents",
+    )
+    document_count = fields.Integer(
+        string="Document Count",
+        compute="_compute_document_count",
     )
 
     timeline_ids = fields.One2many(
@@ -172,6 +183,22 @@ class Customer(models.Model):
         if self.email and "@" in self.email:
             self.status = "active"
 
+    @api.depends("document_ids")
+    def _compute_document_count(self):
+        for customer in self:
+            customer.document_count = len(customer.document_ids)
+
+    def action_view_documents(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": f"Documents - {self.name}",
+            "res_model": "my.first.customer.document",
+            "view_mode": "list,form",
+            "domain": [("customer_id", "=", self.id)],
+            "context": {"default_customer_id": self.id},
+        }
+
     def action_activate(self):
         for customer in self:
             customer.status = "active"
@@ -227,6 +254,24 @@ class Customer(models.Model):
                             "source_ref": f"Payment: {payment.id}",
                         }
                     )
+            for doc in customer.document_ids:
+                doc_type_label = dict(
+                    doc._fields["document_type"].selection
+                ).get(doc.document_type, doc.document_type)
+                desc = f"Type: {doc_type_label}"
+                if doc.invoice_id:
+                    desc += f" | Invoice: {doc.invoice_id.name}"
+                if doc.file_name:
+                    desc += f" | File: {doc.file_name}"
+                events.append(
+                    {
+                        "event_type": "document",
+                        "title": doc.name,
+                        "description": desc,
+                        "event_date": doc.created_at or fields.Datetime.now(),
+                        "source_ref": f"Document: {doc.id}",
+                    }
+                )
             for event in events:
                 event["customer_id"] = customer.id
             if events:

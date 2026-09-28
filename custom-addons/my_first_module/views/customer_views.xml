@@ -147,6 +147,11 @@
 /> -->
             </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_documents" type="object" class="oe_stat_button" icon="fa-paperclip">
+                            <field name="document_count" widget="statinfo" string="Documents"/>
+                        </button>
+                    </div>
 
                     <!-- Customer Information -->
                 <group string="Customer Information">
@@ -244,6 +249,19 @@
                                 <field name="amount_due"/>
                                 <field name="payment_status"/>
                                 <field name="state"/>
+                            </list>
+                        </field>
+                    </page>
+                    <page string="Documents">
+                        <field name="document_ids" context="{'default_customer_id': id}">
+                            <list>
+                                <field name="name"/>
+                                <field name="document_type"/>
+                                <field name="file_name"/>
+                                <field name="file" widget="binary" filename="file_name"/>
+                                <field name="invoice_id"/>
+                                <field name="created_at"/>
+                                <field name="created_by"/>
                             </list>
                         </field>
                     </page>

@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 
+# pyrefly: ignore [missing-import]
 from odoo.exceptions import AccessError, ValidationError
+# pyrefly: ignore [missing-import]
 from odoo.tests.common import TransactionCase
 
 
@@ -46,13 +48,22 @@ class TestCustomer(TransactionCase):
                 "amount_total": 100,
             }
         )
+        self.env["my.first.customer.document"].create(
+            {
+                "customer_id": customer.id,
+                "name": "Service Agreement",
+                "document_type": "contract",
+                "file": "dGVzdA==",
+                "file_name": "contract.pdf",
+            }
+        )
 
         customer.action_refresh_timeline()
 
-        self.assertEqual(len(customer.timeline_ids), 3)
+        self.assertEqual(len(customer.timeline_ids), 4)
         self.assertSetEqual(
             set(customer.timeline_ids.mapped("event_type")),
-            {"note", "activity", "invoice"},
+            {"note", "activity", "invoice", "document"},
         )
 
     def test_invalid_email_is_rejected(self):
@@ -265,3 +276,98 @@ class TestCrmSecurity(TransactionCase):
             self.env["my.first.customer.invoice"].with_user(self.crm_user).browse(
                 invoice.id
             ).write({"notes": "Not allowed"})
+
+    def test_regular_user_can_manage_documents(self):
+        customer = self.env["my.first.customer"].create(
+            {"name": "Doc Security Customer"}
+        )
+        doc = (
+            self.env["my.first.customer.document"]
+            .with_user(self.crm_user)
+            .create(
+                {
+                    "customer_id": customer.id,
+                    "name": "User Uploaded Proposal",
+                    "document_type": "proposal",
+                    "file": "cHJvcG9zYWw=",
+                    "file_name": "proposal.pdf",
+                }
+            )
+        )
+        self.assertTrue(doc.id)
+        self.assertEqual(doc.created_by, self.crm_user)
+
+
+class TestCustomerDocument(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.customer = cls.env["my.first.customer"].create(
+            {"name": "Document Test Customer"}
+        )
+        cls.other_customer = cls.env["my.first.customer"].create(
+            {"name": "Other Document Customer"}
+        )
+        cls.invoice = cls.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": cls.customer.id,
+                "amount_total": 250,
+            }
+        )
+        cls.other_invoice = cls.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": cls.other_customer.id,
+                "amount_total": 500,
+            }
+        )
+
+    def test_document_creation_and_file_size(self):
+        # "dGVzdA==" is base64 for "test" (4 bytes)
+        doc = self.env["my.first.customer.document"].create(
+            {
+                "customer_id": self.customer.id,
+                "name": "Project Proposal",
+                "document_type": "proposal",
+                "file": "dGVzdA==",
+                "file_name": "proposal.pdf",
+            }
+        )
+
+        self.assertEqual(doc.file_size, 4)
+        self.assertEqual(self.customer.document_count, 1)
+        self.assertIn(doc, self.customer.document_ids)
+
+        action = self.customer.action_view_documents()
+        self.assertEqual(action["res_model"], "my.first.customer.document")
+        self.assertIn(("customer_id", "=", self.customer.id), action["domain"])
+
+    def test_document_linked_to_invoice(self):
+        doc = self.env["my.first.customer.document"].create(
+            {
+                "customer_id": self.customer.id,
+                "invoice_id": self.invoice.id,
+                "name": "Invoice Receipt",
+                "document_type": "receipt",
+                "file": "cmVjZWlwdA==",
+                "file_name": "receipt.pdf",
+            }
+        )
+
+        self.assertEqual(self.invoice.document_count, 1)
+        self.assertIn(doc, self.invoice.document_ids)
+
+        action = self.invoice.action_view_documents()
+        self.assertEqual(action["res_model"], "my.first.customer.document")
+        self.assertIn(("invoice_id", "=", self.invoice.id), action["domain"])
+
+    def test_document_invoice_mismatch_raises_validation_error(self):
+        with self.assertRaises(ValidationError):
+            self.env["my.first.customer.document"].create(
+                {
+                    "customer_id": self.customer.id,
+                    "invoice_id": self.other_invoice.id,
+                    "name": "Mismatched Contract",
+                    "document_type": "contract",
+                    "file": "Y29udHJhY3Q=",
+                }
+            )

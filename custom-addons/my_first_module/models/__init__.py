@@ -1,1 +1,1 @@
-from . import activity, company, customer, dashboard, invoice, note, tag, timeline
+from . import activity, company, customer, dashboard, document, invoice, note, tag, timeline

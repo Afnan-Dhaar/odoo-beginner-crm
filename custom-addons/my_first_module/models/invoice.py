@@ -43,6 +43,15 @@ class CustomerInvoice(models.Model):
         "invoice_id",
         string="Payments",
     )
+    document_ids = fields.One2many(
+        "my.first.customer.document",
+        "invoice_id",
+        string="Documents",
+    )
+    document_count = fields.Integer(
+        string="Document Count",
+        compute="_compute_document_count",
+    )
     amount_paid = fields.Monetary(
         string="Amount Paid",
         currency_field="currency_id",
@@ -122,6 +131,25 @@ class CustomerInvoice(models.Model):
         ):
             raise ValidationError("Posted invoices cannot be edited.")
         return super().write(vals)
+
+    @api.depends("document_ids")
+    def _compute_document_count(self):
+        for invoice in self:
+            invoice.document_count = len(invoice.document_ids)
+
+    def action_view_documents(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": f"Documents - {self.name}",
+            "res_model": "my.first.customer.document",
+            "view_mode": "list,form",
+            "domain": [("invoice_id", "=", self.id)],
+            "context": {
+                "default_customer_id": self.customer_id.id,
+                "default_invoice_id": self.id,
+            },
+        }
 
     def action_post(self):
         self.write({"state": "posted"})

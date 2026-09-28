@@ -137,4 +137,23 @@
         <field name="amount_total">1200</field>
     </record>
 
+    <record id="demo_document_proposal_maya" model="my.first.customer.document">
+        <field name="name">Enterprise Software Proposal</field>
+        <field name="document_type">proposal</field>
+        <field name="customer_id" ref="demo_customer_maya"/>
+        <field name="file_name">software_proposal.pdf</field>
+        <field name="file">RW50ZXJwcmlzZSBzb2Z0d2FyZSBwcm9wb3NhbCBjb250ZW50</field>
+        <field name="description">Initial enterprise implementation proposal sent to Maya.</field>
+    </record>
+
+    <record id="demo_document_contract_afnan" model="my.first.customer.document">
+        <field name="name">Master Services Agreement</field>
+        <field name="document_type">contract</field>
+        <field name="customer_id" ref="demo_customer_afnan"/>
+        <field name="invoice_id" ref="demo_invoice_afnan"/>
+        <field name="file_name">msa_contract.pdf</field>
+        <field name="file">U2lnbmVkIE1hc3RlciBTZXJ2aWNlcyBBZ3JlZW1lbnQ=</field>
+        <field name="description">Signed contract linked to initial onboarding invoice.</field>
+    </record>
+
 </odoo>

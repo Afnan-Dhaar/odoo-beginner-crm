@@ -5,6 +5,7 @@ A beginner-friendly CRM application built as a custom Odoo 19 addon.
 ## Features
 
 - Customers, companies, tags, and customer notes
+- Customer attachments (proposals, contracts, receipts, documents) linked to customers and invoices
 - Activities with due dates, overdue tracking, and calendar view
 - Customer invoices and payments with validation rules
 - CRM dashboard with KPI cards and follow-up lists

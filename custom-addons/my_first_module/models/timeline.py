@@ -18,6 +18,7 @@ class CustomerTimeline(models.Model):
             ("activity", "Activity"),
             ("invoice", "Invoice"),
             ("payment", "Payment"),
+            ("document", "Document"),
         ],
         string="Event Type",
         required=True,

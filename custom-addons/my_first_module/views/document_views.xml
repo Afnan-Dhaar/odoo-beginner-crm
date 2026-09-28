@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Document List View -->
+    <record id="view_my_first_customer_document_list" model="ir.ui.view">
+        <field name="name">my.first.customer.document.list</field>
+        <field name="model">my.first.customer.document</field>
+        <field name="arch" type="xml">
+            <list string="Documents">
+                <field name="name"/>
+                <field name="document_type"/>
+                <field name="customer_id"/>
+                <field name="invoice_id"/>
+                <field name="file_name"/>
+                <field name="file" widget="binary" filename="file_name"/>
+                <field name="file_size"/>
+                <field name="created_at"/>
+                <field name="created_by"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Document Form View -->
+    <record id="view_my_first_customer_document_form" model="ir.ui.view">
+        <field name="name">my.first.customer.document.form</field>
+        <field name="model">my.first.customer.document</field>
+        <field name="arch" type="xml">
+            <form string="Customer Document">
+                <sheet>
+                    <group>
+                        <group string="Document Details">
+                            <field name="name"/>
+                            <field name="document_type"/>
+                            <field name="file_name" invisible="1"/>
+                            <field name="file" widget="binary" filename="file_name"/>
+                            <field name="file_size" readonly="1"/>
+                        </group>
+                        <group string="Linked Records">
+                            <field name="customer_id"/>
+                            <field name="invoice_id"/>
+                            <field name="created_at" readonly="1"/>
+                            <field name="created_by" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description" placeholder="Add optional document notes or description..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Document Search View -->
+    <record id="view_my_first_customer_document_search" model="ir.ui.view">
+        <field name="name">my.first.customer.document.search</field>
+        <field name="model">my.first.customer.document</field>
+        <field name="arch" type="xml">
+            <search string="Search Documents">
+                <field name="name"/>
+                <field name="file_name"/>
+                <field name="customer_id"/>
+                <field name="invoice_id"/>
+                <separator/>
+                <filter name="filter_proposals" string="Proposals" domain="[('document_type', '=', 'proposal')]"/>
+                <filter name="filter_contracts" string="Contracts" domain="[('document_type', '=', 'contract')]"/>
+                <filter name="filter_receipts" string="Receipts" domain="[('document_type', '=', 'receipt')]"/>
+                <filter name="filter_documents" string="Documents" domain="[('document_type', '=', 'document')]"/>
+                <separator/>
+                <group>
+                    <filter name="group_by_customer" string="Customer" context="{'group_by': 'customer_id'}"/>
+                    <filter name="group_by_type" string="Document Type" context="{'group_by': 'document_type'}"/>
+                    <filter name="group_by_invoice" string="Invoice" context="{'group_by': 'invoice_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Document Action -->
+    <record id="action_my_first_customer_document" model="ir.actions.act_window">
+        <field name="name">Documents</field>
+        <field name="res_model">my.first.customer.document</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_my_first_customer_document_search"/>
+    </record>
+
+</odoo>
