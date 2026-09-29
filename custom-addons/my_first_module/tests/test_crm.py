@@ -505,3 +505,43 @@ class TestCustomerEmail(TransactionCase):
         self.assertEqual(
             compose_inv["context"]["default_recipient"], self.customer.email
         )
+
+
+class TestCrmDashboard(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.dashboard_model = cls.env["my.first.crm.dashboard"]
+
+    def test_dashboard_kpis_and_actions(self):
+        dashboard = self.dashboard_model.create({"name": "Test Dashboard"})
+        self.assertGreaterEqual(dashboard.customer_count, 0)
+        self.assertGreaterEqual(dashboard.document_count, 0)
+        self.assertGreaterEqual(dashboard.email_count, 0)
+        self.assertGreaterEqual(dashboard.total_invoiced_amount, 0)
+        self.assertGreaterEqual(dashboard.total_paid_amount, 0)
+
+        # Test drilldown actions
+        action_cust = dashboard.action_open_customers()
+        self.assertEqual(action_cust["res_model"], "my.first.customer")
+
+        action_docs = dashboard.action_open_documents()
+        self.assertEqual(action_docs["res_model"], "my.first.customer.document")
+
+        action_emails = dashboard.action_open_emails()
+        self.assertEqual(action_emails["res_model"], "my.first.customer.email")
+
+        action_paid = dashboard.action_open_paid_invoices()
+        self.assertEqual(action_paid["res_model"], "my.first.customer.invoice")
+
+        # Test quick create actions
+        create_cust = dashboard.action_create_customer()
+        self.assertEqual(create_cust["res_model"], "my.first.customer")
+
+        create_doc = dashboard.action_create_document()
+        self.assertEqual(create_doc["res_model"], "my.first.customer.document")
+        self.assertEqual(create_doc["target"], "new")
+
+        send_email = dashboard.action_send_email()
+        self.assertEqual(send_email["res_model"], "my.first.customer.email")
+        self.assertEqual(send_email["target"], "new")

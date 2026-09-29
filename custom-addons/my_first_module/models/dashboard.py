@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from odoo import api, fields, models
 
 
@@ -21,6 +22,24 @@ class CrmDashboard(models.Model):
         currency_field="currency_id",
         compute="_compute_kpis",
     )
+    document_count = fields.Integer(
+        string="Documents",
+        compute="_compute_kpis",
+    )
+    email_count = fields.Integer(
+        string="Emails",
+        compute="_compute_kpis",
+    )
+    total_invoiced_amount = fields.Monetary(
+        string="Total Invoiced",
+        currency_field="currency_id",
+        compute="_compute_kpis",
+    )
+    total_paid_amount = fields.Monetary(
+        string="Total Collected",
+        currency_field="currency_id",
+        compute="_compute_kpis",
+    )
     recent_activity_ids = fields.Many2many(
         "my.first.customer.activity",
         compute="_compute_kpis",
@@ -29,12 +48,22 @@ class CrmDashboard(models.Model):
         "my.first.customer.activity",
         compute="_compute_kpis",
     )
+    recent_email_ids = fields.Many2many(
+        "my.first.customer.email",
+        compute="_compute_kpis",
+    )
+    recent_document_ids = fields.Many2many(
+        "my.first.customer.document",
+        compute="_compute_kpis",
+    )
 
     @api.depends()
     def _compute_kpis(self):
         Customer = self.env["my.first.customer"]
         Activity = self.env["my.first.customer.activity"]
         Invoice = self.env["my.first.customer.invoice"]
+        Document = self.env["my.first.customer.document"]
+        Email = self.env["my.first.customer.email"]
 
         customer_count = Customer.search_count([])
         active_customer_count = Customer.search_count([("status", "=", "active")])
@@ -48,7 +77,16 @@ class CrmDashboard(models.Model):
         unpaid_invoices = Invoice.search(
             [("payment_status", "in", ["not_paid", "partially_paid"])]
         )
-        recent_activities = Activity.search([], order="create_date desc", limit=5)
+        non_cancelled_invoices = Invoice.search([("state", "!=", "cancelled")])
+        total_invoiced_amount = sum(non_cancelled_invoices.mapped("amount_total"))
+        total_paid_amount = sum(non_cancelled_invoices.mapped("amount_paid"))
+
+        document_count = Document.search_count([])
+        email_count = Email.search_count([])
+
+        recent_activities = Activity.search(
+            [], order="create_date desc, id desc", limit=5
+        )
         upcoming_activities = Activity.search(
             [
                 ("status", "=", "planned"),
@@ -56,6 +94,10 @@ class CrmDashboard(models.Model):
             ],
             order="due_date, id",
             limit=5,
+        )
+        recent_emails = Email.search([], order="date desc, id desc", limit=5)
+        recent_documents = Document.search(
+            [], order="created_at desc, id desc", limit=5
         )
 
         for dashboard in self:
@@ -66,8 +108,14 @@ class CrmDashboard(models.Model):
             dashboard.overdue_activity_count = overdue_activity_count
             dashboard.unpaid_invoice_count = len(unpaid_invoices)
             dashboard.outstanding_amount = sum(unpaid_invoices.mapped("amount_due"))
+            dashboard.document_count = document_count
+            dashboard.email_count = email_count
+            dashboard.total_invoiced_amount = total_invoiced_amount
+            dashboard.total_paid_amount = total_paid_amount
             dashboard.recent_activity_ids = recent_activities
             dashboard.upcoming_activity_ids = upcoming_activities
+            dashboard.recent_email_ids = recent_emails
+            dashboard.recent_document_ids = recent_documents
 
     def _open_action(self, model, name):
         return {
@@ -102,6 +150,17 @@ class CrmDashboard(models.Model):
         action["domain"] = [("payment_status", "in", ["not_paid", "partially_paid"])]
         return action
 
+    def action_open_paid_invoices(self):
+        action = self._open_action("my.first.customer.invoice", "Paid Invoices")
+        action["domain"] = [("payment_status", "=", "paid")]
+        return action
+
+    def action_open_documents(self):
+        return self._open_action("my.first.customer.document", "Documents")
+
+    def action_open_emails(self):
+        return self._open_action("my.first.customer.email", "Email Communications")
+
     def action_create_customer(self):
         return {
             "type": "ir.actions.act_window",
@@ -127,4 +186,26 @@ class CrmDashboard(models.Model):
             "res_model": "my.first.customer.invoice",
             "view_mode": "form",
             "target": "current",
+        }
+
+    def action_create_document(self):
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Upload Document",
+            "res_model": "my.first.customer.document",
+            "view_mode": "form",
+            "target": "new",
+        }
+
+    def action_send_email(self):
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Compose Email",
+            "res_model": "my.first.customer.email",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_direction": "outgoing",
+                "default_state": "sent",
+            },
         }
