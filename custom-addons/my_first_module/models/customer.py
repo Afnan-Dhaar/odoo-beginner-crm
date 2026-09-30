@@ -247,6 +247,12 @@ class Customer(models.Model):
             },
         }
 
+    def action_print_statement(self):
+        self.ensure_one()
+        return self.env.ref(
+            "my_first_module.action_report_customer_statement"
+        ).report_action(self)
+
     def action_activate(self):
         for customer in self:
             customer.status = "active"

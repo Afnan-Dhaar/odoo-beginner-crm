@@ -30,6 +30,7 @@
                     <button name="action_cancel" string="Cancel" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <button name="action_reset_to_draft" string="Reset to Draft" type="object" class="btn-secondary" invisible="state != 'cancelled'"/>
                     <button name="action_send_email" string="Send Email" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
+                    <button name="action_print_invoice" string="Print Invoice" type="object" class="btn-secondary" invisible="state == 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,posted,cancelled"/>
                 </header>
                 <sheet>

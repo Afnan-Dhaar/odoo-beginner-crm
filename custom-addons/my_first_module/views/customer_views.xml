@@ -145,6 +145,12 @@
                 type="object"
                 class="btn-secondary"
                     />
+                    <button
+                name="action_print_statement"
+                string="Print Statement"
+                type="object"
+                class="btn-secondary"
+                    />
     <!-- <button
     name="action_test_multiple_create"
     string="Test Multiple Create"

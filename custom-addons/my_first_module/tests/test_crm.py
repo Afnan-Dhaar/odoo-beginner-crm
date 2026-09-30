@@ -545,3 +545,73 @@ class TestCrmDashboard(TransactionCase):
         send_email = dashboard.action_send_email()
         self.assertEqual(send_email["res_model"], "my.first.customer.email")
         self.assertEqual(send_email["target"], "new")
+
+
+class TestPrintReports(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        layout = cls.env.ref("web.external_layout_standard", raise_if_not_found=False)
+        if layout:
+            cls.env.company.external_report_layout_id = layout
+
+        cls.customer = cls.env["my.first.customer"].create(
+            {
+                "name": "Report Test Customer",
+                "email": "report@example.com",
+                "street": "123 Report St",
+                "city": "Austin",
+                "country": "United States",
+            }
+        )
+        cls.invoice = cls.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": cls.customer.id,
+                "amount_total": 750,
+                "notes": "Payment due within 30 days.",
+            }
+        )
+        cls.payment = cls.env["my.first.customer.payment"].create(
+            {
+                "invoice_id": cls.invoice.id,
+                "amount": 250,
+                "payment_method": "bank",
+                "reference": "TEST-REP-01",
+            }
+        )
+
+    def test_customer_invoice_report_action_and_rendering(self):
+        report = self.env.ref("my_first_module.action_report_customer_invoice")
+        self.assertTrue(report)
+        self.assertEqual(report.model, "my.first.customer.invoice")
+
+        # Test action method on model
+        action = self.invoice.action_print_invoice()
+        report_act = action.get("context", {}).get("report_action", action)
+        report_name = report_act.get("report_name") or action.get("report_name")
+        self.assertEqual(report_name, "my_first_module.report_customer_invoice")
+
+        # Test QWeb template rendering
+        html_content, _ = report._render_qweb_html(report.id, self.invoice.ids)
+        self.assertIn("Invoice", str(html_content))
+        self.assertIn(self.invoice.name, str(html_content))
+        self.assertIn(self.customer.name, str(html_content))
+        self.assertIn("TEST-REP-01", str(html_content))
+
+    def test_customer_statement_report_action_and_rendering(self):
+        report = self.env.ref("my_first_module.action_report_customer_statement")
+        self.assertTrue(report)
+        self.assertEqual(report.model, "my.first.customer")
+
+        # Test action method on model
+        action = self.customer.action_print_statement()
+        report_act = action.get("context", {}).get("report_action", action)
+        report_name = report_act.get("report_name") or action.get("report_name")
+        self.assertEqual(report_name, "my_first_module.report_customer_statement")
+
+        # Test QWeb template rendering
+        html_content, _ = report._render_qweb_html(report.id, self.customer.ids)
+        self.assertIn("Account Statement", str(html_content))
+        self.assertIn(self.customer.name, str(html_content))
+        self.assertIn(self.customer.reference, str(html_content))
+        self.assertIn(self.invoice.name, str(html_content))

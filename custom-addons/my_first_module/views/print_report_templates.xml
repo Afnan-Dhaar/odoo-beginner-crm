@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <!-- Customer Invoice Report Action -->
+    <record id="action_report_customer_invoice" model="ir.actions.report">
+        <field name="name">Customer Invoice</field>
+        <field name="model">my.first.customer.invoice</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">my_first_module.report_customer_invoice</field>
+        <field name="report_file">my_first_module.report_customer_invoice</field>
+        <field name="print_report_name">'Invoice - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_my_first_customer_invoice"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Customer Statement Report Action -->
+    <record id="action_report_customer_statement" model="ir.actions.report">
+        <field name="name">Customer Statement</field>
+        <field name="model">my.first.customer</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">my_first_module.report_customer_statement</field>
+        <field name="report_file">my_first_module.report_customer_statement</field>
+        <field name="print_report_name">'Statement - %s' % (object.name)</field>
+        <field name="binding_model_id" ref="model_my_first_customer"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- Customer Invoice QWeb Template -->
+    <template id="report_customer_invoice">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="company" t-value="env.company"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="row mb-4">
+                            <div class="col-8">
+                                <h2 class="mb-0">
+                                    <span>Invoice </span>
+                                    <span t-field="doc.name"/>
+                                </h2>
+                                <p class="text-muted mt-1">Status: 
+                                    <span t-if="doc.state == 'draft'" class="badge bg-secondary">Draft</span>
+                                    <span t-if="doc.state == 'posted'" class="badge bg-success">Posted</span>
+                                    <span t-if="doc.state == 'cancelled'" class="badge bg-danger">Cancelled</span>
+                                </p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <h5 class="mb-1">Payment Status:</h5>
+                                <span t-if="doc.payment_status == 'paid'" class="badge bg-success fs-6">Paid</span>
+                                <span t-if="doc.payment_status == 'partially_paid'" class="badge bg-warning text-dark fs-6">Partially Paid</span>
+                                <span t-if="doc.payment_status == 'not_paid'" class="badge bg-danger fs-6">Not Paid</span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <strong>Billed To:</strong>
+                                <div><span t-field="doc.customer_id.name" class="fw-bold"/></div>
+                                <div t-if="doc.customer_id.company_name"><span t-field="doc.customer_id.company_name"/></div>
+                                <div t-if="doc.customer_id.street"><span t-field="doc.customer_id.street"/></div>
+                                <div t-if="doc.customer_id.city or doc.customer_id.state or doc.customer_id.zip">
+                                    <span t-field="doc.customer_id.city"/>
+                                    <span t-if="doc.customer_id.city and doc.customer_id.state">, </span>
+                                    <span t-field="doc.customer_id.state"/>
+                                    <span t-field="doc.customer_id.zip"/>
+                                </div>
+                                <div t-if="doc.customer_id.country"><span t-field="doc.customer_id.country"/></div>
+                                <div t-if="doc.customer_id.phone">Phone: <span t-field="doc.customer_id.phone"/></div>
+                                <div t-if="doc.customer_id.email">Email: <span t-field="doc.customer_id.email"/></div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <div><strong>Invoice Date:</strong> <span t-field="doc.invoice_date"/></div>
+                                <div t-if="doc.due_date"><strong>Due Date:</strong> <span t-field="doc.due_date"/></div>
+                                <div><strong>Customer Reference:</strong> <span t-field="doc.customer_id.reference"/></div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Summary Table -->
+                        <table class="table table-sm table-bordered mt-4">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-end">Total Amount</th>
+                                    <th class="text-end">Amount Paid</th>
+                                    <th class="text-end">Amount Due</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>CRM Service / Invoice Details</td>
+                                    <td class="text-end">
+                                        <span t-field="doc.amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="doc.amount_paid" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        <span t-field="doc.amount_due" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Payment History Table -->
+                        <div t-if="doc.payment_ids" class="mt-4">
+                            <h5>Payment History</h5>
+                            <table class="table table-sm table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Payment Method</th>
+                                        <th>Reference</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.payment_ids" t-as="payment">
+                                        <td><span t-field="payment.payment_date"/></td>
+                                        <td><span t-field="payment.payment_method"/></td>
+                                        <td><span t-field="payment.reference"/></td>
+                                        <td class="text-end">
+                                            <span t-field="payment.amount" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Notes & Terms -->
+                        <div t-if="doc.notes" class="mt-4 p-3 bg-light rounded">
+                            <h6>Notes &amp; Payment Terms</h6>
+                            <p class="mb-0" t-field="doc.notes"/>
+                        </div>
+
+                        <div class="mt-5 text-center text-muted">
+                            <p>Thank you for your business!</p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <!-- Customer Statement QWeb Template -->
+    <template id="report_customer_statement">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="company" t-value="env.company"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <div class="row mb-4">
+                            <div class="col-8">
+                                <h2 class="mb-0">
+                                    <span>Account Statement</span>
+                                </h2>
+                                <p class="text-muted mt-1">Customer: <span t-field="doc.name" class="fw-bold"/> (<span t-field="doc.reference"/>)</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <span t-if="doc.status == 'active'" class="badge bg-success fs-6">Active Customer</span>
+                                <span t-if="doc.status != 'active'" class="badge bg-secondary fs-6"><span t-field="doc.status"/></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <strong>Customer Information:</strong>
+                                <div><strong>Category:</strong> <span t-field="doc.category"/></div>
+                                <div t-if="doc.company_name"><strong>Company:</strong> <span t-field="doc.company_name"/></div>
+                                <div t-if="doc.email"><strong>Email:</strong> <span t-field="doc.email"/></div>
+                                <div t-if="doc.phone"><strong>Phone:</strong> <span t-field="doc.phone"/></div>
+                                <div t-if="doc.last_contact_date"><strong>Last Contact:</strong> <span t-field="doc.last_contact_date"/></div>
+                            </div>
+                            <div class="col-6 text-end">
+                                <strong>Financial Summary:</strong>
+                                <div>Total Invoiced: <span t-field="doc.total_invoiced" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></div>
+                                <div>Total Paid: <span t-field="doc.total_paid" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/></div>
+                                <div class="fs-5 mt-2 fw-bold text-danger">
+                                    Total Balance Due: <span t-field="doc.total_due" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoices Statement Table -->
+                        <div class="mt-4">
+                            <h5>Invoice History</h5>
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Date</th>
+                                        <th>Due Date</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-end">Paid</th>
+                                        <th class="text-end">Balance Due</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.invoice_ids" t-as="invoice">
+                                        <td><span t-field="invoice.name"/></td>
+                                        <td><span t-field="invoice.invoice_date"/></td>
+                                        <td><span t-field="invoice.due_date"/></td>
+                                        <td class="text-end">
+                                            <span t-field="invoice.amount_total" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-field="invoice.amount_paid" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                        <td class="text-end fw-bold">
+                                            <span t-field="invoice.amount_due" t-options='{"widget": "monetary", "display_currency": doc.currency_id}'/>
+                                        </td>
+                                        <td><span t-field="invoice.payment_status"/></td>
+                                    </tr>
+                                    <tr t-if="not doc.invoice_ids">
+                                        <td colspan="7" class="text-center text-muted">No invoices found for this customer.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Activities / Follow-up Overview -->
+                        <div t-if="doc.activity_ids" class="mt-4">
+                            <h5>Activities &amp; Follow-ups</h5>
+                            <table class="table table-sm table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Type</th>
+                                        <th>Due Date</th>
+                                        <th>Priority</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="doc.activity_ids" t-as="activity">
+                                        <td><span t-field="activity.title"/></td>
+                                        <td><span t-field="activity.activity_type"/></td>
+                                        <td><span t-field="activity.due_date"/></td>
+                                        <td><span t-field="activity.priority"/></td>
+                                        <td><span t-field="activity.status"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-5 text-center text-muted">
+                            <p>End of Customer Account Statement</p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

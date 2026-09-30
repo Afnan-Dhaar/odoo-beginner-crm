@@ -209,6 +209,12 @@ class CustomerInvoice(models.Model):
     def action_reset_to_draft(self):
         self.with_context(allow_invoice_state_change=True).write({"state": "draft"})
 
+    def action_print_invoice(self):
+        self.ensure_one()
+        return self.env.ref(
+            "my_first_module.action_report_customer_invoice"
+        ).report_action(self)
+
 
 class CustomerPayment(models.Model):
     _name = "my.first.customer.payment"

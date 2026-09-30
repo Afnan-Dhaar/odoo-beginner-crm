@@ -24,6 +24,7 @@
         "views/email_log_views.xml",
         "views/dashboard_views.xml",
         "views/report_views.xml",
+        "views/print_report_templates.xml",
     ],
     "demo": [
         "demo/demo.xml",
