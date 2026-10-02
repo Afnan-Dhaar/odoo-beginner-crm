@@ -22,11 +22,34 @@ class CustomerInvoice(models.Model):
         required=True,
         ondelete="cascade",
     )
+    company_currency_id = fields.Many2one(
+        "res.currency",
+        string="Company Currency",
+        default=lambda self: self.env.company.currency_id,
+        compute="_compute_company_currency",
+        store=True,
+        precompute=True,
+    )
     currency_id = fields.Many2one(
         "res.currency",
         string="Currency",
         required=True,
-        default=lambda self: self.env.company.currency_id,
+        default=lambda self: self._default_currency_id(),
+    )
+    exchange_rate = fields.Float(
+        string="Exchange Rate",
+        digits=(12, 6),
+        default=1.0,
+        required=True,
+        compute="_compute_exchange_rate",
+        store=True,
+        readonly=False,
+        precompute=True,
+    )
+    is_foreign_currency = fields.Boolean(
+        string="Is Foreign Currency",
+        compute="_compute_is_foreign_currency",
+        store=True,
     )
     invoice_date = fields.Date(
         string="Invoice Date",
@@ -74,6 +97,24 @@ class CustomerInvoice(models.Model):
         compute="_compute_payment_amounts",
         store=True,
     )
+    amount_total_company = fields.Monetary(
+        string="Total (Company)",
+        currency_field="company_currency_id",
+        compute="_compute_company_amounts",
+        store=True,
+    )
+    amount_paid_company = fields.Monetary(
+        string="Paid (Company)",
+        currency_field="company_currency_id",
+        compute="_compute_company_amounts",
+        store=True,
+    )
+    amount_due_company = fields.Monetary(
+        string="Due (Company)",
+        currency_field="company_currency_id",
+        compute="_compute_company_amounts",
+        store=True,
+    )
     payment_status = fields.Selection(
         [
             ("not_paid", "Not Paid"),
@@ -96,6 +137,67 @@ class CustomerInvoice(models.Model):
     )
     notes = fields.Text(string="Notes")
 
+    def _default_currency_id(self):
+        customer_id = self.env.context.get("default_customer_id")
+        if customer_id:
+            customer = self.env["my.first.customer"].browse(customer_id)
+            if customer.preferred_currency_id:
+                return customer.preferred_currency_id
+        return self.env.company.currency_id
+
+    @api.onchange("customer_id")
+    def _onchange_customer_id(self):
+        if self.customer_id and self.customer_id.preferred_currency_id:
+            self.currency_id = self.customer_id.preferred_currency_id
+
+    @api.depends_context("company")
+    def _compute_company_currency(self):
+        comp_curr = self.env.company.currency_id
+        for invoice in self:
+            invoice.company_currency_id = comp_curr
+
+    @api.depends("currency_id", "company_currency_id")
+    def _compute_is_foreign_currency(self):
+        for invoice in self:
+            comp_curr = invoice.company_currency_id or self.env.company.currency_id
+            invoice.is_foreign_currency = bool(
+                invoice.currency_id and invoice.currency_id != comp_curr
+            )
+
+    @api.depends("currency_id", "invoice_date")
+    def _compute_exchange_rate(self):
+        for invoice in self:
+            comp_curr = invoice.company_currency_id or self.env.company.currency_id
+            if not invoice.currency_id or invoice.currency_id == comp_curr:
+                invoice.exchange_rate = 1.0
+            else:
+                date = invoice.invoice_date or fields.Date.today()
+                rate = invoice.currency_id._get_conversion_rate(
+                    invoice.currency_id, comp_curr, self.env.company, date
+                )
+                invoice.exchange_rate = rate or 1.0
+
+    @api.depends(
+        "amount_total",
+        "amount_paid",
+        "amount_due",
+        "exchange_rate",
+        "currency_id",
+        "company_currency_id",
+    )
+    def _compute_company_amounts(self):
+        for invoice in self:
+            comp_curr = invoice.company_currency_id or self.env.company.currency_id
+            is_foreign = bool(invoice.currency_id and invoice.currency_id != comp_curr)
+            rate = invoice.exchange_rate if is_foreign else 1.0
+            if not rate or rate <= 0:
+                rate = 1.0
+            invoice.amount_total_company = comp_curr.round(invoice.amount_total * rate)
+            invoice.amount_paid_company = comp_curr.round(invoice.amount_paid * rate)
+            invoice.amount_due_company = (
+                invoice.amount_total_company - invoice.amount_paid_company
+            )
+
     @api.depends("payment_ids.amount")
     def _compute_payment_amounts(self):
         for invoice in self:
@@ -117,6 +219,12 @@ class CustomerInvoice(models.Model):
         for invoice in self:
             if invoice.amount_total <= 0:
                 raise ValidationError("Invoice total must be greater than zero.")
+
+    @api.constrains("exchange_rate")
+    def _check_exchange_rate(self):
+        for invoice in self:
+            if invoice.exchange_rate <= 0:
+                raise ValidationError("Exchange rate must be greater than zero.")
 
     @api.constrains("invoice_date", "due_date")
     def _check_due_date(self):
@@ -238,10 +346,21 @@ class CustomerPayment(models.Model):
         string="Currency",
         readonly=True,
     )
+    company_currency_id = fields.Many2one(
+        related="invoice_id.company_currency_id",
+        string="Company Currency",
+        readonly=True,
+    )
     amount = fields.Monetary(
         string="Payment Amount",
         currency_field="currency_id",
         required=True,
+    )
+    amount_company = fields.Monetary(
+        string="Payment (Company)",
+        currency_field="company_currency_id",
+        compute="_compute_amount_company",
+        store=True,
     )
     payment_date = fields.Date(
         string="Payment Date",
@@ -261,6 +380,20 @@ class CustomerPayment(models.Model):
     )
     reference = fields.Char(string="Payment Reference")
     notes = fields.Text(string="Notes")
+
+    @api.depends(
+        "amount",
+        "invoice_id.exchange_rate",
+        "invoice_id.currency_id",
+        "invoice_id.company_currency_id",
+    )
+    def _compute_amount_company(self):
+        for payment in self:
+            comp_curr = payment.company_currency_id or self.env.company.currency_id
+            inv = payment.invoice_id
+            is_foreign = bool(inv.currency_id and inv.currency_id != comp_curr)
+            rate = inv.exchange_rate if is_foreign else 1.0
+            payment.amount_company = comp_curr.round(payment.amount * (rate or 1.0))
 
     @api.model_create_multi
     def create(self, vals_list):

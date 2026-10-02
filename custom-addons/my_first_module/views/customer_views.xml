@@ -179,6 +179,7 @@
                     <field name="company_id"/>
                     <field name="company_name"/>
                     <field name="tag_ids" widget="many2many_tags"/>
+                    <field name="preferred_currency_id"/>
                     <field name="status"/>
                     <field name="last_contact_date" readonly="1"/>
                     <field name="last_updated" readonly="1"/>
@@ -193,7 +194,7 @@
                     <field name="country"/>
                 </group>
                 <group string="Financial Summary">
-                    <field name="currency_id" invisible="1"/>
+                    <field name="currency_id" string="Reporting Currency" readonly="1"/>
                     <field name="total_invoiced" readonly="1"/>
                     <field name="total_paid" readonly="1"/>
                     <field name="total_due" readonly="1"/>
@@ -259,9 +260,11 @@
                                 <field name="name"/>
                                 <field name="invoice_date"/>
                                 <field name="due_date"/>
+                                <field name="currency_id"/>
                                 <field name="amount_total"/>
                                 <field name="amount_paid"/>
                                 <field name="amount_due"/>
+                                <field name="amount_total_company" string="Total (Company)" optional="show"/>
                                 <field name="payment_status"/>
                                 <field name="state"/>
                             </list>

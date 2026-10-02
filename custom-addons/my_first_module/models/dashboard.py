@@ -78,8 +78,10 @@ class CrmDashboard(models.Model):
             [("payment_status", "in", ["not_paid", "partially_paid"])]
         )
         non_cancelled_invoices = Invoice.search([("state", "!=", "cancelled")])
-        total_invoiced_amount = sum(non_cancelled_invoices.mapped("amount_total"))
-        total_paid_amount = sum(non_cancelled_invoices.mapped("amount_paid"))
+        total_invoiced_amount = sum(
+            non_cancelled_invoices.mapped("amount_total_company")
+        )
+        total_paid_amount = sum(non_cancelled_invoices.mapped("amount_paid_company"))
 
         document_count = Document.search_count([])
         email_count = Email.search_count([])
@@ -107,7 +109,9 @@ class CrmDashboard(models.Model):
             dashboard.open_activity_count = open_activity_count
             dashboard.overdue_activity_count = overdue_activity_count
             dashboard.unpaid_invoice_count = len(unpaid_invoices)
-            dashboard.outstanding_amount = sum(unpaid_invoices.mapped("amount_due"))
+            dashboard.outstanding_amount = sum(
+                unpaid_invoices.mapped("amount_due_company")
+            )
             dashboard.document_count = document_count
             dashboard.email_count = email_count
             dashboard.total_invoiced_amount = total_invoiced_amount

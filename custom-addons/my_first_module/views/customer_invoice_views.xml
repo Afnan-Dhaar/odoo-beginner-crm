@@ -11,9 +11,11 @@
                 <field name="customer_id"/>
                 <field name="invoice_date"/>
                 <field name="due_date"/>
+                <field name="currency_id"/>
                 <field name="amount_total"/>
                 <field name="amount_paid"/>
                 <field name="amount_due"/>
+                <field name="amount_total_company" string="Total (Company)" optional="show"/>
                 <field name="payment_status"/>
                 <field name="state"/>
             </list>
@@ -45,7 +47,10 @@
                     <group string="Invoice Details">
                         <field name="name" readonly="1"/>
                         <field name="customer_id" readonly="state != 'draft'"/>
+                        <field name="company_currency_id" invisible="1"/>
+                        <field name="is_foreign_currency" invisible="1"/>
                         <field name="currency_id" readonly="state != 'draft'"/>
+                        <field name="exchange_rate" invisible="not is_foreign_currency" readonly="state != 'draft'"/>
                         <field name="invoice_date" readonly="state != 'draft'"/>
                         <field name="due_date" readonly="state != 'draft'"/>
                         <field name="amount_total" readonly="state != 'draft'"/>
@@ -54,6 +59,9 @@
                     <group string="Payment Summary">
                         <field name="amount_paid" readonly="1"/>
                         <field name="amount_due" readonly="1"/>
+                        <field name="amount_total_company" invisible="not is_foreign_currency" readonly="1"/>
+                        <field name="amount_paid_company" invisible="not is_foreign_currency" readonly="1"/>
+                        <field name="amount_due_company" invisible="not is_foreign_currency" readonly="1"/>
                     </group>
                     <notebook>
                         <page string="Payments">
@@ -61,6 +69,8 @@
                                 <list editable="bottom">
                                     <field name="payment_date"/>
                                     <field name="amount"/>
+                                    <field name="company_currency_id" column_invisible="1"/>
+                                    <field name="amount_company" string="Amount (Company)" optional="show" readonly="1"/>
                                     <field name="payment_method"/>
                                     <field name="reference"/>
                                 </list>
@@ -106,15 +116,18 @@
             <search string="Search Customer Invoices">
                 <field name="name"/>
                 <field name="customer_id"/>
+                <field name="currency_id"/>
                 <separator/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="posted" string="Posted" domain="[('state', '=', 'posted')]"/>
                 <filter name="not_paid" string="Not Paid" domain="[('payment_status', '=', 'not_paid')]"/>
                 <filter name="partially_paid" string="Partially Paid" domain="[('payment_status', '=', 'partially_paid')]"/>
                 <filter name="paid" string="Paid" domain="[('payment_status', '=', 'paid')]"/>
+                <filter name="foreign_currency" string="Foreign Currency" domain="[('is_foreign_currency', '=', True)]"/>
                 <separator/>
                 <group>
                     <filter name="group_by_customer" string="Customer" context="{'group_by': 'customer_id'}"/>
+                    <filter name="group_by_currency" string="Currency" context="{'group_by': 'currency_id'}"/>
                     <filter name="group_by_status" string="Payment Status" context="{'group_by': 'payment_status'}"/>
                 </group>
             </search>

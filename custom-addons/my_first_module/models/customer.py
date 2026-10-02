@@ -129,6 +129,11 @@ class Customer(models.Model):
         string="Last Contact",
         compute="_compute_profile_summary",
     )
+    preferred_currency_id = fields.Many2one(
+        "res.currency",
+        string="Preferred Currency",
+        help="Preferred billing currency for this customer.",
+    )
     currency_id = fields.Many2one(
         "res.currency",
         string="Currency",
@@ -160,9 +165,9 @@ class Customer(models.Model):
         "note_ids.updated_at",
         "activity_ids.completed_at",
         "email_ids.date",
-        "invoice_ids.amount_total",
-        "invoice_ids.amount_paid",
-        "invoice_ids.amount_due",
+        "invoice_ids.amount_total_company",
+        "invoice_ids.amount_paid_company",
+        "invoice_ids.amount_due_company",
     )
     def _compute_profile_summary(self):
         for customer in self:
@@ -180,9 +185,15 @@ class Customer(models.Model):
                 fields.Date.to_date(max(contact_dates)) if contact_dates else False
             )
             customer.currency_id = self.env.company.currency_id
-            customer.total_invoiced = sum(customer.invoice_ids.mapped("amount_total"))
-            customer.total_paid = sum(customer.invoice_ids.mapped("amount_paid"))
-            customer.total_due = sum(customer.invoice_ids.mapped("amount_due"))
+            customer.total_invoiced = sum(
+                customer.invoice_ids.mapped("amount_total_company")
+            )
+            customer.total_paid = sum(
+                customer.invoice_ids.mapped("amount_paid_company")
+            )
+            customer.total_due = sum(
+                customer.invoice_ids.mapped("amount_due_company")
+            )
 
     @api.constrains("email")
     def _check_email(self):

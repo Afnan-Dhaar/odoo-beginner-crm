@@ -615,3 +615,136 @@ class TestPrintReports(TransactionCase):
         self.assertIn(self.customer.name, str(html_content))
         self.assertIn(self.customer.reference, str(html_content))
         self.assertIn(self.invoice.name, str(html_content))
+
+
+class TestMultiCurrency(TransactionCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        layout = cls.env.ref("web.external_layout_standard", raise_if_not_found=False)
+        if layout:
+            cls.env.company.external_report_layout_id = layout
+
+        cls.currency_eur = cls.env.ref("base.EUR")
+        cls.currency_usd = cls.env.ref("base.USD")
+
+        cls.customer = cls.env["my.first.customer"].create(
+            {
+                "name": "Global Multi-Currency Client",
+                "email": "global@example.com",
+                "preferred_currency_id": cls.currency_eur.id,
+            }
+        )
+
+    def test_preferred_currency_autofills_on_invoice(self):
+        invoice = self.env["my.first.customer.invoice"].new(
+            {"customer_id": self.customer.id}
+        )
+        invoice._onchange_customer_id()
+        self.assertEqual(invoice.currency_id, self.currency_eur)
+
+    def test_foreign_currency_conversion_and_payments(self):
+        invoice = self.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": self.customer.id,
+                "currency_id": self.currency_eur.id,
+                "amount_total": 1000,
+                "exchange_rate": 1.15,
+            }
+        )
+        self.assertTrue(invoice.is_foreign_currency)
+        self.assertEqual(invoice.amount_total_company, 1150.0)
+        self.assertEqual(invoice.amount_due_company, 1150.0)
+        self.assertEqual(invoice.amount_paid_company, 0.0)
+
+        # Register a payment in EUR
+        payment = self.env["my.first.customer.payment"].create(
+            {
+                "invoice_id": invoice.id,
+                "amount": 400,
+                "payment_method": "bank",
+                "reference": "EUR-PAY-001",
+            }
+        )
+        invoice.invalidate_recordset()
+        self.assertEqual(invoice.amount_paid, 400.0)
+        self.assertEqual(invoice.amount_due, 600.0)
+        self.assertEqual(payment.amount_company, 460.0)
+        self.assertEqual(invoice.amount_paid_company, 460.0)
+        self.assertEqual(invoice.amount_due_company, 690.0)
+
+    def test_non_positive_exchange_rate_raises_error(self):
+        with self.assertRaises(ValidationError):
+            self.env["my.first.customer.invoice"].create(
+                {
+                    "customer_id": self.customer.id,
+                    "currency_id": self.currency_eur.id,
+                    "amount_total": 500,
+                    "exchange_rate": 0.0,
+                }
+            )
+
+        with self.assertRaises(ValidationError):
+            self.env["my.first.customer.invoice"].create(
+                {
+                    "customer_id": self.customer.id,
+                    "currency_id": self.currency_eur.id,
+                    "amount_total": 500,
+                    "exchange_rate": -1.2,
+                }
+            )
+
+    def test_customer_financial_summary_unifies_mixed_currencies(self):
+        # Invoice 1: 500 USD (rate 1.0)
+        inv_usd = self.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": self.customer.id,
+                "currency_id": self.currency_usd.id,
+                "amount_total": 500,
+                "exchange_rate": 1.0,
+            }
+        )
+        # Invoice 2: 1000 EUR (rate 1.10 = 1100 USD)
+        inv_eur = self.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": self.customer.id,
+                "currency_id": self.currency_eur.id,
+                "amount_total": 1000,
+                "exchange_rate": 1.10,
+            }
+        )
+        # Payment on EUR invoice: 500 EUR (at 1.10 = 550 USD)
+        self.env["my.first.customer.payment"].create(
+            {
+                "invoice_id": inv_eur.id,
+                "amount": 500,
+                "payment_method": "bank",
+            }
+        )
+
+        self.customer.invalidate_recordset()
+        # Total invoiced: 500 USD + 1100 USD = 1600 USD
+        self.assertEqual(self.customer.total_invoiced, 1600.0)
+        # Total paid: 550 USD
+        self.assertEqual(self.customer.total_paid, 550.0)
+        # Total due: 1600 - 550 = 1050 USD
+        self.assertEqual(self.customer.total_due, 1050.0)
+
+    def test_multi_currency_report_rendering(self):
+        invoice = self.env["my.first.customer.invoice"].create(
+            {
+                "customer_id": self.customer.id,
+                "currency_id": self.currency_eur.id,
+                "amount_total": 2000,
+                "exchange_rate": 1.25,
+            }
+        )
+        report_inv = self.env.ref("my_first_module.action_report_customer_invoice")
+        html_inv, _ = report_inv._render_qweb_html(report_inv.id, invoice.ids)
+        self.assertIn("Exchange Rate", str(html_inv))
+        self.assertIn("EUR", str(html_inv))
+
+        report_stmt = self.env.ref("my_first_module.action_report_customer_statement")
+        html_stmt, _ = report_stmt._render_qweb_html(report_stmt.id, self.customer.ids)
+        self.assertIn("Reporting Currency", str(html_stmt))
+        self.assertIn("Account Statement", str(html_stmt))

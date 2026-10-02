@@ -73,6 +73,9 @@
                 <field name="amount_total" type="measure"/>
                 <field name="amount_paid" type="measure"/>
                 <field name="amount_due" type="measure"/>
+                <field name="amount_total_company" type="measure"/>
+                <field name="amount_paid_company" type="measure"/>
+                <field name="amount_due_company" type="measure"/>
             </graph>
         </field>
     </record>
@@ -87,6 +90,9 @@
                 <field name="amount_total" type="measure"/>
                 <field name="amount_paid" type="measure"/>
                 <field name="amount_due" type="measure"/>
+                <field name="amount_total_company" type="measure"/>
+                <field name="amount_paid_company" type="measure"/>
+                <field name="amount_due_company" type="measure"/>
             </pivot>
         </field>
     </record>

@@ -58,6 +58,7 @@
         <field name="category">prospect</field>
         <field name="status">active</field>
         <field name="company_id" ref="demo_company_consulting"/>
+        <field name="preferred_currency_id" ref="base.EUR"/>
         <field name="tag_ids" eval="[(6, 0, [ref('demo_tag_new_business')])]"/>
         <field name="city">Denver</field>
         <field name="state">Colorado</field>
@@ -132,6 +133,8 @@
 
     <record id="demo_invoice_maya" model="my.first.customer.invoice">
         <field name="customer_id" ref="demo_customer_maya"/>
+        <field name="currency_id" ref="base.EUR"/>
+        <field name="exchange_rate">1.10</field>
         <field name="invoice_date" eval="DateTime.today().strftime('%Y-%m-%d')"/>
         <field name="due_date" eval="(DateTime.today() + relativedelta(days=14)).strftime('%Y-%m-%d')"/>
         <field name="amount_total">1200</field>

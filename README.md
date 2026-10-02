@@ -12,6 +12,7 @@ A beginner-friendly CRM application built as a custom Odoo 19 addon.
 - CRM dashboard with KPI cards and follow-up lists
 - Customer, activity, and invoice graph/pivot reports
 - Printable PDF reports (Customer Invoices and Account Statements)
+- Multi-currency support with exchange rate tracking, customer preferred currency, and base currency conversions
 - CRM User and CRM Manager security groups
 - Automated Odoo tests and GitHub Actions CI
 
